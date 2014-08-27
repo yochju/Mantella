@@ -1,0 +1,4 @@
+-Dragging
+->there is some weird qlist error? when moving tab to rightmost position and then dragging out
+-->should be fixed????
+-Loading Options

@@ -5,6 +5,7 @@
 #-------------------------------------------------
 
 QT       += core gui
+CONFIG += c++11
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -22,8 +23,20 @@ debug:MOC_DIR = ../build/debug
 debug:UI_DIR = ../build/debug
 
 SOURCES += main.cpp\
-        mainWindow.cpp
+        mainWindow.cpp \
+    optionsTab.cpp \
+    sidewindow.cpp \
+    draggabletabwidget.cpp \
+    draggabletabbar.cpp
 
-HEADERS  += mainWindow.hpp
+HEADERS  += mainWindow.hpp \
+    optionsTab.hpp \
+    sidewindow.hpp \
+    draggabletabwidget.hpp \
+    draggabletabbar.hpp
 
-FORMS    += mainWindow.ui
+FORMS    += \
+    testWindow.ui
+
+OTHER_FILES += \
+    TODO.txt
