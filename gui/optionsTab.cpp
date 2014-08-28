@@ -25,7 +25,9 @@ OptionsTab::OptionsTab(QWidget *parent) :
 
     //creating the buttonbar on the bottom and connecting the buttons
     startButton = new QPushButton("Start");
+    startButton->setShortcut(QKeySequence(Qt::CTRL+Qt::Key_R));
     stopAllButton = new QPushButton("Stop All");
+    stopAllButton->setShortcut(QKeySequence(Qt::CTRL+Qt::Key_S));
     buttonBox = new QDialogButtonBox();
     buttonBox->addButton(startButton,QDialogButtonBox::YesRole);
     buttonBox->addButton(stopAllButton,QDialogButtonBox::NoRole);

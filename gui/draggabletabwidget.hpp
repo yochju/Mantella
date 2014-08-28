@@ -1,8 +1,12 @@
 #ifndef DRAGGABLETABWIDGET_HPP
 #define DRAGGABLETABWIDGET_HPP
 
+#include <QDebug>
+
 #include <QTabWidget>
 #include <QtGui>
+#include <QShortcut>
+#include <QMessageBox>
 #include "draggabletabbar.hpp"
 
 class DraggableTabWidget : public QTabWidget
@@ -14,6 +18,8 @@ public:
 signals:
 
 public slots:
+    //shortcuts
+    void closeTab();
 
 protected:
     virtual void dragEnterEvent(QDragEnterEvent *event);

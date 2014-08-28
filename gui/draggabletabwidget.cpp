@@ -7,6 +7,27 @@ DraggableTabWidget::DraggableTabWidget(QWidget *parent) :
     setTabBar(tb);
     setTabsClosable(true);
     setAcceptDrops(true);
+
+    //setup shortcuts
+    //setup remaining keys
+    QShortcut *shortcut = new QShortcut(QKeySequence(Qt::CTRL+Qt::Key_F4),this);
+    connect(shortcut,SIGNAL(activated()),this,SLOT(closeTab()));
+}
+
+void DraggableTabWidget::closeTab()
+{
+    qDebug() << "closing tab";
+    if(currentIndex() == -1) {
+        return;
+    }
+    if(OptionsTab* optionsTab = dynamic_cast<OptionsTab*>(widget(currentIndex()))) {
+        QMessageBox::information(this,"Trying to close Optionstab","You are trying to close the Optionstab. This isn't possible!");
+        return;
+    }
+    removeTab(currentIndex());
+    if(currentIndex() == -1) {
+        window()->close();
+    }
 }
 
 void DraggableTabWidget::dragEnterEvent(QDragEnterEvent *event)

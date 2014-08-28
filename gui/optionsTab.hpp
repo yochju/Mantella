@@ -13,6 +13,7 @@
 #include <QCheckBox>
 #include <QDialogButtonBox>
 #include <QPushButton>
+#include <QKeySequence>
 #include "sidewindow.hpp"
 
 class OptionsTab : public QWidget

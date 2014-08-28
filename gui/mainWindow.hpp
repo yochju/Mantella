@@ -6,6 +6,10 @@
 #include <QVBoxLayout>
 #include <QMainWindow>
 #include <QTabBar>
+#include <QMenuBar>
+#include <QMenu>
+#include <QAction>
+#include <QMessageBox>
 #include "optionsTab.hpp"
 #include "sidewindow.hpp"
 
@@ -26,13 +30,17 @@ public:
     void addTestTabs();
 
     static bool dndHandled;
-    static bool dndInside;
-    static QWidget draggedObject;
+
+
+    //used by the menu
+    void setupMenuBar();
+    QAction *exitAct;
+    QAction *aboutAct;
 
 public slots:
-    void startPressed();
-    void stopAllPressed();
-
+    //used by the menu
+    void about();
+    void exitProgram();
 };
 
 #endif // MAINWINDOW_HPP

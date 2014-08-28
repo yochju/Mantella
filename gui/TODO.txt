@@ -2,3 +2,13 @@
 ->there is some weird qlist error? when moving tab to rightmost position and then dragging out
 -->should be fixed????
 -Loading Options
+-I18N
+-populate menu
+-->what else should be put into the menu?
+-shortcuts
+->prevent alt+f4 instant closing
+
+Shortcuts:
+Ctrl+Q | Ctrl+F4: quit
+Ctrl+S: stop
+Ctrl+R: run

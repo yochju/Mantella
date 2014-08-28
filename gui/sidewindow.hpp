@@ -22,9 +22,17 @@ public:
     DraggableTabWidget *tabWidget;
 
     DraggableTabWidget* getTabWidget();
+
+    //used by the menu
+    void setupMenuBar();
+    QAction *exitAct;
+    QAction *aboutAct;
 signals:
 
 public slots:
+    //used by the menu
+    void about();
+    void exitProgram();
 
 };
 
