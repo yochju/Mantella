@@ -5,26 +5,42 @@ DraggableTabWidget::DraggableTabWidget(QWidget *parent) :
 {
     QTabBar* tb = new DraggableTabBar;
     setTabBar(tb);
+    //setup closable tabs
     setTabsClosable(true);
+    connect(this,SIGNAL(tabCloseRequested(int)),this,SLOT(closeTab(int)));
+
     setAcceptDrops(true);
 
     //setup shortcuts
     //setup remaining keys
     QShortcut *shortcut = new QShortcut(QKeySequence(Qt::CTRL+Qt::Key_F4),this);
-    connect(shortcut,SIGNAL(activated()),this,SLOT(closeTab()));
-}
+    connect(shortcut,SIGNAL(activated()),this,SLOT(closeTab()));}
 
-void DraggableTabWidget::closeTab()
+void DraggableTabWidget::closeTab(int index)
 {
     qDebug() << "closing tab";
-    if(currentIndex() == -1) {
-        return;
+    //not sure why i did this if...
+//    if(currentIndex() == -1) {
+//        return;
+//    }
+    //closing current tab via shortcut
+    if(index==-2) {
+        if(OptionsTab* optionsTab = dynamic_cast<OptionsTab*>(widget(currentIndex()))) {
+            QMessageBox::information(this,"Trying to close Optionstab","You are trying to close the Optionstab. This isn't possible!");
+            return;
+        }
+        removeTab(currentIndex());
     }
-    if(OptionsTab* optionsTab = dynamic_cast<OptionsTab*>(widget(currentIndex()))) {
-        QMessageBox::information(this,"Trying to close Optionstab","You are trying to close the Optionstab. This isn't possible!");
-        return;
+    //closing tab normally
+    else {
+        //this shouldn't be possible, but just in case
+        if(OptionsTab* optionsTab = dynamic_cast<OptionsTab*>(widget(index))) {
+            QMessageBox::information(this,"Trying to close Optionstab","You are trying to close the Optionstab. This isn't possible!");
+            return;
+        }
+        removeTab(index);
     }
-    removeTab(currentIndex());
+
     if(currentIndex() == -1) {
         window()->close();
     }
@@ -93,4 +109,11 @@ void DraggableTabWidget::mouseReleaseEvent(QMouseEvent *event)
 void DraggableTabWidget::mousePressEvent(QMouseEvent *event)
 {
     qDebug() << "widget mousepress event";
+}
+
+void DraggableTabWidget::removeTab(int index) {
+    qDebug() <<"removing tab";
+    //super-call
+    QTabWidget::removeTab(index);
+    //close sidewindow if no more tabs
 }

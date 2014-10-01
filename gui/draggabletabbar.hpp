@@ -1,5 +1,4 @@
-#ifndef DRAGGABLETABBAR_HPP
-#define DRAGGABLETABBAR_HPP
+#pragma once
 
 #include <QDebug>
 
@@ -35,5 +34,3 @@ protected:
     virtual void mouseEnterEvent(QMouseEvent *event);
     QPoint lastPos;
 };
-
-#endif // DRAGGABLETABBAR_HPP

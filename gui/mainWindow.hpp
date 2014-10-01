@@ -1,5 +1,4 @@
-#ifndef MAINWINDOW_HPP
-#define MAINWINDOW_HPP
+#pragma once
 
 #include <QDebug>
 
@@ -43,4 +42,3 @@ public slots:
     void exitProgram();
 };
 
-#endif // MAINWINDOW_HPP

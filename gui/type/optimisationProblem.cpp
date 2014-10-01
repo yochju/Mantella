@@ -1,4 +1,4 @@
-#include <optimisationProblem.hpp>
+#include "optimisationProblem.hpp"
 
 decltype(OptimisationProblem::_names) OptimisationProblem::_names = {
   {OptimisationProblem::Type::AttractiveSectorFunction, "Attractive sector function"},
@@ -27,6 +27,6 @@ decltype(OptimisationProblem::_names) OptimisationProblem::_names = {
   {OptimisationProblem::Type::WeierstrassFunction, "Weierstrass function"}
 };
 
-std::string OptimisationProblem::getName(const Type& type) const {
+std::string OptimisationProblem::getName( Type& type)  {
   return _names.at(type);
 }

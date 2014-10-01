@@ -1,5 +1,4 @@
-#ifndef OPTIONSTAB_HPP
-#define OPTIONSTAB_HPP
+#pragma once
 
 #include <QDebug>
 
@@ -14,6 +13,7 @@
 #include <QDialogButtonBox>
 #include <QPushButton>
 #include <QKeySequence>
+#include "type/optimisationProblem.hpp"
 #include "sidewindow.hpp"
 
 class OptionsTab : public QWidget
@@ -40,7 +40,7 @@ public:
     QCheckBox *parallelCheckBox;
     QWidget *specificOptions;
 
-    QWidget* constructSpecificOptions(QString optProblemName, QString optAlgoName);
+    QWidget* constructSpecificOptions(OptimisationProblem::Type optProblem);
     void populateEval();
     void populateOptProblem();
     void populateOptAlgo();
@@ -54,7 +54,9 @@ signals:
 public slots:
     void startPressed();
     void stopAllPressed();
+    void optAlgoSelectionChanged(int);
+    void optProblemSelectionChanged(int);
+    void evalSelectionChanged(int);
 
+protected:
 };
-
-#endif // OPTIONSTAB_H

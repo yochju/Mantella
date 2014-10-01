@@ -1,4 +1,4 @@
-#include <plot.hpp>
+#include "plot.hpp"
 
 decltype(Plot::_names) Plot::_names = {
   {Plot::Type::FitnessFunction, "Fitness function"}

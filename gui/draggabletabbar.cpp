@@ -116,22 +116,17 @@ void DraggableTabBar::mouseLeaveEvent(QMouseEvent *event)
     if(!MainWindow::dndHandled) {
         SideWindow *sideWindow = new SideWindow;
         sideWindow->show();
-        qDebug() << "sourcebar";
         DraggableTabBar *sourceBar = this;
-        qDebug() << "sourcetabwidget";
         DraggableTabWidget *sourceTabWidget = (DraggableTabWidget *)sourceBar->parentWidget();
-        qDebug() << "draggedtab";
         QWidget *draggedTab = sourceTabWidget->widget(sourceBar->currentIndex());
-        qDebug() << "icon";
         QIcon icon = sourceTabWidget->tabIcon(sourceBar->currentIndex());
-        qDebug() << "text";
         QString text = sourceTabWidget->tabText(sourceBar->currentIndex());
-        qDebug() << "targettabwidget";
         DraggableTabWidget *targetTabWidget = (DraggableTabWidget *)sideWindow->getTabWidget();
-        qDebug() << "addtab";
         sourceTabWidget->removeTab(sourceBar->currentIndex());
         targetTabWidget->addTab(draggedTab,icon,text);
-
+        QTabBar *tabBar = targetTabWidget->findChild<QTabBar *>();
+        tabBar->setTabButton(0,QTabBar::RightSide,0);
+        tabBar->setTabButton(0,QTabBar::LeftSide,0);
     }
     MainWindow::dndHandled = false;
 }

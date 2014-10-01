@@ -1,5 +1,4 @@
-#ifndef SIDEWINDOW_HPP
-#define SIDEWINDOW_HPP
+#pragma once
 
 #include <QDebug>
 
@@ -35,5 +34,3 @@ public slots:
     void exitProgram();
 
 };
-
-#endif // SIDEWINDOW_HPP

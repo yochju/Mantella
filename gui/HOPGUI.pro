@@ -27,13 +27,17 @@ SOURCES += main.cpp\
     optionsTab.cpp \
     sidewindow.cpp \
     draggabletabwidget.cpp \
-    draggabletabbar.cpp
+    draggabletabbar.cpp \
+    type/optimisationProblem.cpp \
+    type/plot.cpp
 
 HEADERS  += mainWindow.hpp \
     optionsTab.hpp \
     sidewindow.hpp \
     draggabletabwidget.hpp \
-    draggabletabbar.hpp
+    draggabletabbar.hpp \
+    type/optimisationProblem.hpp \
+    type/plot.hpp
 
 FORMS    += \
     testWindow.ui

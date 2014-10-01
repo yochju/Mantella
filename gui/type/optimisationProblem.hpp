@@ -32,8 +32,8 @@ class OptimisationProblem {
       WeierstrassFunction
     };
 
-    std::string getName(const Type& type) const;
+    static std::string getName( Type& type) ;
 
-  protected:
+  //protected:
     static const std::map<Type, std::string> _names;
 };

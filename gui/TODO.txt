@@ -7,8 +7,21 @@
 -->what else should be put into the menu?
 -shortcuts
 ->prevent alt+f4 instant closing
+-smart pointers
+
+Ideas:
+-maybe move buttons to a standalone widget at the bottom of mainwindow?
+->either disable dragging of optionstab or need some reference to it
+-disable dragging for optionstab also solves bug 3
 
 Shortcuts:
-Ctrl+Q | Ctrl+F4: quit
+Ctrl+Q: quit
+Ctrl+F4: close tab
 Ctrl+S: stop
 Ctrl+R: run
+
+"bugs":
+1->sidewindow is not closing when optionstab is last tab in it and it gets dragged out
+-->also needs check such that mainwindow doesn't close in that case
+2->sidewindow can be closed even if it contains optionstab
+3->optionstab gui elements are moving if specific options are getting changed

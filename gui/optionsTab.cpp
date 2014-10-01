@@ -1,5 +1,6 @@
 #include "optionsTab.hpp"
 
+
 OptionsTab::OptionsTab(QWidget *parent) :
     QWidget(parent)
 {
@@ -16,12 +17,14 @@ OptionsTab::OptionsTab(QWidget *parent) :
     optProblemDropdown = new QComboBox;
     optAlgoLabel = new QLabel("Optimisation algorithm");
     optAlgoDropdown = new QComboBox;
+    populateOptAlgo();
 
     generalOptionsGroup = new QGroupBox("General options");
     parallelLabel = new QLabel("Parallelisation");
     parallelCheckBox = new QCheckBox;
+    populateOptProblem();
 
-    specificOptions = constructSpecificOptions(NULL,NULL);
+    specificOptions = constructSpecificOptions(OptimisationProblem::Type::AttractiveSectorFunction);
 
     //creating the buttonbar on the bottom and connecting the buttons
     startButton = new QPushButton("Start");
@@ -58,16 +61,19 @@ OptionsTab::OptionsTab(QWidget *parent) :
 
     layout->addWidget(specificOptions,9,0,1,2);
 
-    layout->addWidget(buttonBox,11,0,1,2);
+    layout->addWidget(buttonBox,10,0,1,2);
 
     setLayout(layout);
 }
 
-QWidget* OptionsTab::constructSpecificOptions(QString optProblemName, QString optAlgoName)
+QWidget* OptionsTab::constructSpecificOptions(OptimisationProblem::Type optProblem)
 {
+    //create a "container"
     QGroupBox *specOpsGroup = new QGroupBox("Specific options");
     QGridLayout *specOpsLayout = new QGridLayout;
     specOpsGroup->setLayout(specOpsLayout);
+
+    //DEBUG STUFF
 #ifdef QT_DEBUG
     QLabel *testy = new QLabel("testy");
     QComboBox *testBox = new QComboBox;
@@ -79,10 +85,76 @@ QWidget* OptionsTab::constructSpecificOptions(QString optProblemName, QString op
     specOpsLayout->addWidget(testBox2);
 #endif
 
-    //if nothing is selected, return empty;
-    if(optProblemName == NULL || optAlgoName == NULL || optProblemName.isEmpty() || optAlgoName.isEmpty()) {
-        return specOpsGroup;
+    //fill "container" depending on problem
+    switch(optProblem) {
+    case OptimisationProblem::Type::AttractiveSectorFunction:
+    {
+        QLabel *nametest = new QLabel(QString::fromStdString(OptimisationProblem::getName(optProblem)));
+        specOpsLayout->addWidget(nametest);
+        break;
     }
+    case OptimisationProblem::Type::BentCigarFunction:
+    {
+        QLabel *nametest = new QLabel(QString::fromStdString(OptimisationProblem::getName(optProblem)));
+        specOpsLayout->addWidget(nametest);
+        QLabel *nametest2 = new QLabel(QString::fromStdString(OptimisationProblem::getName(optProblem)));
+        specOpsLayout->addWidget(nametest2);
+        QLabel *nametest3 = new QLabel(QString::fromStdString(OptimisationProblem::getName(optProblem)));
+        specOpsLayout->addWidget(nametest3);
+        QLabel *nametest4 = new QLabel(QString::fromStdString(OptimisationProblem::getName(optProblem)));
+        specOpsLayout->addWidget(nametest4);
+        QLabel *nametest5 = new QLabel(QString::fromStdString(OptimisationProblem::getName(optProblem)));
+        specOpsLayout->addWidget(nametest5);
+        break;
+    }
+    case OptimisationProblem::Type::BuecheRastriginFunction:
+
+    case OptimisationProblem::Type::CompositeGriewankRosenbrockFunctionF8F2:
+
+    case OptimisationProblem::Type::DifferentPowersFunction:
+
+    case OptimisationProblem::Type::DiscusFunction:
+
+    case OptimisationProblem::Type::EllipsoidalFunction:
+
+    case OptimisationProblem::Type::EllipsoidalFunctionRotated:
+
+    case OptimisationProblem::Type::GallaghersGaussian101mePeaksFunction:
+
+    case OptimisationProblem::Type::GallaghersGaussian21hiPeaksFunction:
+
+    case OptimisationProblem::Type::KatsuuraFunction:
+
+    case OptimisationProblem::Type::LinearSlope:
+
+    case OptimisationProblem::Type::LunacekBiRastriginFunction:
+
+    case OptimisationProblem::Type::RastriginFunction:
+
+    case OptimisationProblem::Type::RastriginFunctionRotated:
+
+    case OptimisationProblem::Type::RosenbrockFunction:
+
+    case OptimisationProblem::Type::RosenbrockFunctionRotated:
+
+    case OptimisationProblem::Type::SchaffersF7Function:
+
+    case OptimisationProblem::Type::SchaffersF7FunctionIllConditioned:
+
+    case OptimisationProblem::Type::SchwefelFunction:
+
+    case OptimisationProblem::Type::SharpRidgeFunction:
+
+    case OptimisationProblem::Type::SphereFunction:
+
+    case OptimisationProblem::Type::StepEllipsoidalFunction:
+
+    case OptimisationProblem::Type::WeierstrassFunction:
+
+        break;
+    }
+
+    return specOpsGroup;
 }
 
 void OptionsTab::populateEval()
@@ -90,9 +162,16 @@ void OptionsTab::populateEval()
 
 }
 
+Q_DECLARE_METATYPE(OptimisationProblem::Type)
+
 void OptionsTab::populateOptProblem()
 {
-
+    OptimisationProblem::_names.at(OptimisationProblem::Type::AttractiveSectorFunction);
+    for(auto &any : OptimisationProblem::_names) {
+        qDebug() << typeid(any.first).name();
+        optProblemDropdown->addItem(QString::fromStdString(any.second),QVariant::fromValue(any.first));
+    }
+    connect(optProblemDropdown,SIGNAL(currentIndexChanged(int)),this,SLOT(optProblemSelectionChanged(int)));
 }
 
 void OptionsTab::populateOptAlgo()
@@ -108,4 +187,27 @@ void OptionsTab::startPressed() {
 
 void OptionsTab::stopAllPressed() {
     qDebug() << "stopAll pressed";
+}
+
+void OptionsTab::optAlgoSelectionChanged(int)
+{
+
+}
+
+void OptionsTab::optProblemSelectionChanged(int)
+{
+    QVariant var = optProblemDropdown->currentData();
+    OptimisationProblem::Type problemType = var.value<OptimisationProblem::Type>();
+
+    QWidget *updatedSpecificOptions = constructSpecificOptions(problemType);
+    layout->removeWidget(specificOptions);
+    specificOptions->deleteLater();
+    layout->addWidget(updatedSpecificOptions,9,0,1,2);
+    specificOptions = updatedSpecificOptions;
+
+}
+
+void OptionsTab::evalSelectionChanged(int)
+{
+
 }
