@@ -1,6 +1,6 @@
 namespace mant {
   
-  
+    
 
   //
   // Implementation
