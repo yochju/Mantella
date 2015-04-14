@@ -2,3 +2,8 @@ xacmes 119
 xacmes_buildModel_RANKSVM 
 
 algo.aSZ sollte vorher immer mit jedem cur_state.iteration einen größer werden (was soll aSZ darstellen?)
+
+fitfun (was xacmes_evaluate ist) ist verpackt in cur_state.
+wird ausgeführt in:
+cmaes_initializeRun(cur_state)
+cmaes_iteration
