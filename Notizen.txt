@@ -7,3 +7,31 @@ fitfun (was xacmes_evaluate ist) ist verpackt in cur_state.
 wird ausgeführt in:
 cmaes_initializeRun(cur_state)
 cmaes_iteration
+
+coeffs sind in initModelParameters.m (dort def_coeff)
+Später können diese auch in xacmes andere werden:
+pcoeff(j) = optModel.xmin(j) + curparams(j) * ( optModel.xmax(j) - optModel.xmin(j));
+
+x_training : matrix mit trainingspunkten? N reihen und ntraining spalten
+N : vermutlich dimension?
+ntraining : anzahl der trainingsläufe? ist immer algo.aSZ
+niter : ?? ist immer floor( coeff(5)*nTraining ); mit coeff(5) = 1000
+epsilon : ?? ist immer 1
+ci : Vektor mit ntraining-1 werten
+    werte sind immer absteigende folge von ntraining-1 bis 0 kubiert (also ^3)
+    und anschließend mit 1millionen multipliziert.
+cinv : invsqrtC von cmaes, matrix. unbekannte werte. N * N groß
+sigmaA : ?? ist immer 1
+sigmaPow : ?? ist immer 1
+xmean : ?? vektor. schwer nachvollziehbar wo es herkommt. vermutlich N lang
+
+x_training_encoded : matrix mit encodierten trainingspunkten? N reihen und ntraining spalten
+optAlphas : vektor mit optimierten irgendwas werten
+TwoSigmaPow2: 2*sigma² - sinn unbekannt
+
+
+
+Encoding:
+for int i=0; i < ntraining; i++
+  Vec dx[0..N] = x_training[i][0..N] - xmean[0..N];
+  x_tr_encoded[i][0..N] = summe (invsqrtC[0..N] elementwise multipliziert mit dx)
