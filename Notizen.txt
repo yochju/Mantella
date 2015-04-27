@@ -21,8 +21,8 @@ ci : Vektor mit ntraining-1 werten
     werte sind immer absteigende folge von ntraining-1 bis 0 kubiert (also ^3)
     und anschließend mit 1millionen multipliziert.
 cinv : invsqrtC von cmaes, matrix. unbekannte werte. N * N groß
-sigmaA : ?? ist immer 1
-sigmaPow : ?? ist immer 1
+sigmaA : ?? ist immer 1 (kann sich verändern)
+sigmaPow : ?? ist immer 1 (in hcma festgeschrieben auf 1)
 xmean : ?? vektor. schwer nachvollziehbar wo es herkommt. vermutlich N lang
 
 x_training_encoded : matrix mit encodierten trainingspunkten? N reihen und ntraining spalten
@@ -31,7 +31,59 @@ TwoSigmaPow2: 2*sigma² - sinn unbekannt
 
 
 
+ABLAUF:
+
 Encoding:
 for int i=0; i < ntraining; i++
   Vec dx[0..N] = x_training[i][0..N] - xmean[0..N];
   x_tr_encoded[i][0..N] = summe (invsqrtC[0..N] elementwise multipliziert mit dx)
+
+TwoSigmaPow2 = 0;
+Mat K; ntraining * ntraining
+
+CalculateTrainingKernelMatrix:
+avrdist = 0
+for int i=0; i < ntraining; i++
+  K[i][i] = 0;
+  for int j=i+1; j < ntraining; j++
+    K[i][k] = K[j][i] = euclid_distpow2(x_tr_encoded[i]-x_tr_encoded[j]);
+    avrdist += sqrt(K[i][k]);
+avrdist /= ((ntraining-1)*ntraining / 2);
+TwoSigmaPow2 = 2* (sigma_A* avrdist^sigmaPow)²;
+for int i=0; i < ntraining; i++
+  K[i][i] = 1;
+  for int j=i+1; j < ntraining; j++
+    K[i][j] = K[j][i] = e^(-K[i][j] / TwoSigmaPow2);
+
+alpha[ntraining-1];
+
+OptimizeL:
+nAlpha = ntraining - 1;
+sumAlphaDK[nAlpha];
+Mat div_dK; nAlpha * nAlpha
+Mat dK; nAlpha * nAlpha
+for int i=0; i < nAlpha; i++
+  for int j=0; j < nAlpha; j++
+    dK[i][j] = K[i][j] - K[i][j+1] - K[i+1][j] + K[i+1][j+1];
+  alpha[i] = Ci[i] * (0.95 + 0.05 *rand() / RAND_MAX);
+for int i=0; i < nAlpha; i++
+  sumAlpha = summe (alpha elementwise multipliziert mit dK[i]);
+  sumAlphaDK[i] = (epsilon - sumAlpha) / dK[i][i];
+for int i=0; i < nAlpha; i++
+  for int j=0; j < nAlpha; j++
+    div_dK[i][j] /= dK[j][j];
+L=0;
+for int i=0; i < niter; i++                    //i wird nur als i%nAlpha benutzt
+  new_alpha = alpha[i%nAlpha] + sumAlphaDK[i%nAlpha];
+  if(new_alpha > Ci[i%nAlpha]) {
+    new_alpha = Ci[i%nAlpha];
+  }
+  if(new_alpha < 0) {
+    new_alpha = 0;
+  }
+  delta_alpha = new_alpha - alpha[i%nAlpha];
+  dL = delta_alpha * dK[i%nAlpha][i%nAlpha] * (sumAlphaDK[i%nAlpha] - 0.5 * delta_Alpha);
+  if(dL>0) {
+    sumAlphaDK -= delta_alpha * div_dK[i%nAlpha];
+  }
+  alpha[i%nAlpha] = new_alpha;
