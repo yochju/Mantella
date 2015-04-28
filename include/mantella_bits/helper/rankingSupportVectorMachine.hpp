@@ -2,8 +2,8 @@ namespace mant {
 
   class RankingSVM {
     public:
-      explicit RankingSVM(arma::Mat<double> xTraining, unsigned int niter, unsigned int ntraining, arma::Mat<double> Ci, arma::Mat<double> invsqrtC, arma::Col<double> xMean) noexcept;
-      LearningRankN();
+      explicit RankingSVM(arma::Mat<double> xTraining, unsigned int niter, unsigned int ntraining, arma::Col<double> Ci, arma::Mat<double> invsqrtC, arma::Col<double> xMean) noexcept;
+      void LearningRankN();
       
       void SetEpsilon(double epsilon);
       double GetEpsilon() const;
@@ -25,7 +25,7 @@ namespace mant {
       arma::Mat<double> xTraining;
       unsigned int niter;
       unsigned int ntraining;
-      arma::Mat<double> Ci;
+      arma::Col<double> Ci;
       arma::Mat<double> invsqrtC;
       arma::Col<double> xMean;
       
@@ -35,7 +35,7 @@ namespace mant {
       double TwoSigmaPow2 = 0;
       
       //RankSVMLearn.cpp Variables Between Functions
-      double nAlpha;
+      unsigned int nAlpha; //may need to be int, not sure if ntraining can be 0
       arma::Mat<double> K;
   };
 
@@ -43,7 +43,7 @@ namespace mant {
   // Implementation
   //
 
-  RankingSVM::RankingSVM(arma::Mat<double> xTraining, unsigned int niter, unsigned int ntraining, arma::Mat<double> Ci, arma::Mat<double> invsqrtC, arma::Col<double> xMean) noexcept {
+  RankingSVM::RankingSVM(arma::Mat<double> xTraining, unsigned int niter, unsigned int ntraining, arma::Col<double> Ci, arma::Mat<double> invsqrtC, arma::Col<double> xMean) noexcept {
     this->xTraining = xTraining;
     this->niter = niter;
     this->ntraining = ntraining;
@@ -61,20 +61,20 @@ namespace mant {
     nAlpha = ntraining-1;    
   }
   
-  RankingSVM::LearningRankN() {
+  void RankingSVM::LearningRankN() {
     Encoding();
     CalculateTrainingKernelMatrix();
     OptimizeL();
   }
   
-  RankingSVM::Encoding() {
+  void RankingSVM::Encoding() {
     for(int i = 0; i < ntraining; i++) {
       arma::Col<double> dx = xTraining.col(i) - xMean;
       xTrainingEncoded.col(i) = arma::sum(invsqrtC*dx);
     }
   }
   
-  RankingSVM::CalculateTrainingKernelMatrix() {
+  void RankingSVM::CalculateTrainingKernelMatrix() {
     double avrdist = 0;
     for(int i=0; i < ntraining; i++) {
       K(i,i) = 0;
@@ -100,7 +100,7 @@ namespace mant {
     }
   }
   
-  RankingSVM::OptimizeL() {
+  void RankingSVM::OptimizeL() {
     arma::Col<double> sumAlphaDK = arma::zeros(nAlpha);
     arma::Mat<double> divDK = arma::zeros(nAlpha,nAlpha);
     arma::Mat<double> dK = arma::zeros(nAlpha,nAlpha);
@@ -110,7 +110,7 @@ namespace mant {
       for(int j = 0; j < nAlpha; j++) {
         dK(j,i) = K(j,i) - K(j+1,i) - K(j, i+1) + K(j+1,i+1);
       }
-      optAlphas(i) = Ci(i) * (0.95 + 0.05 * arma::randu);
+      optAlphas(i) = Ci(i) * (0.95 + 0.05 * arma::randu());
     }
     
     for(int i = 0; i < nAlpha; i++) {
