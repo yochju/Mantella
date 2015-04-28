@@ -31,7 +31,7 @@ TwoSigmaPow2: 2*sigma² - sinn unbekannt
 
 
 
-ABLAUF:
+ABLAUF: Indizes sind hier falsch herum.
 
 Encoding:
 for int i=0; i < ntraining; i++
@@ -46,9 +46,9 @@ avrdist = 0
 for int i=0; i < ntraining; i++
   K[i][i] = 0;
   for int j=i+1; j < ntraining; j++
-    K[i][k] = K[j][i] = euclid_distpow2(x_tr_encoded[i]-x_tr_encoded[j]);
+    K[i][j] = K[j][i] = euclid_distpow2(x_tr_encoded[i]-x_tr_encoded[j]);
     avrdist += sqrt(K[i][k]);
-avrdist /= ((ntraining-1)*ntraining / 2);
+avrdist /= (ntraining-1)*ntraining / 2;
 TwoSigmaPow2 = 2* (sigma_A* avrdist^sigmaPow)²;
 for int i=0; i < ntraining; i++
   K[i][i] = 1;
@@ -71,8 +71,7 @@ for int i=0; i < nAlpha; i++
   sumAlphaDK[i] = (epsilon - sumAlpha) / dK[i][i];
 for int i=0; i < nAlpha; i++
   for int j=0; j < nAlpha; j++
-    div_dK[i][j] /= dK[j][j];
-L=0;
+    div_dK[i][j] = dK[i][j] / dK[j][j];
 for int i=0; i < niter; i++                    //i wird nur als i%nAlpha benutzt
   new_alpha = alpha[i%nAlpha] + sumAlphaDK[i%nAlpha];
   if(new_alpha > Ci[i%nAlpha]) {
@@ -85,5 +84,7 @@ for int i=0; i < niter; i++                    //i wird nur als i%nAlpha benutzt
   dL = delta_alpha * dK[i%nAlpha][i%nAlpha] * (sumAlphaDK[i%nAlpha] - 0.5 * delta_Alpha);
   if(dL>0) {
     sumAlphaDK -= delta_alpha * div_dK[i%nAlpha];
+    alpha[i%nAlpha] = new_alpha;
   }
-  alpha[i%nAlpha] = new_alpha;
+
+optAlpha = alpha;

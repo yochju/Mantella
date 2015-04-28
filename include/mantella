@@ -88,7 +88,7 @@
 #include <mantella_bits/helper/string.hpp>
 #include <mantella_bits/helper/trajectory.hpp>
 #include <mantella_bits/helper/unorderedContainer.hpp>
-#include <mantella_bits/helper/supportVectorMachine.hpp>
+#include <mantella_bits/helper/rankingSupportVectorMachine.hpp>
 
 // Distance functions
 #include <mantella_bits/distanceFunction.hpp>
