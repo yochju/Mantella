@@ -1,7 +1,8 @@
-xacmes 119
-xacmes_buildModel_RANKSVM 
-
 algo.aSZ sollte vorher immer mit jedem cur_state.iteration einen größer werden (was soll aSZ darstellen?)
+algo.asZ wird nie größer als algo.maxArchSize
+algo.maxArchSize wird am Anfang auf optModel.MaxTrainingPoints gesetzt und nie geändert
+ARZ scheint der Wurf der nächsten Punkte in Standardnormalverteilung zu sein, aber nur Lambda-Anzahl an Punkten?
+ARX scheinen die mit C (hier allerdings durch DiagD, was anscheinend eigenvektoren oder eigenwerte enthält) und sigma umgeformten punkte zu handeln.
 
 fitfun (was xacmes_evaluate ist) ist verpackt in cur_state.
 wird ausgeführt in:
