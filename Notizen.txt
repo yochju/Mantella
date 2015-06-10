@@ -1,18 +1,78 @@
+####################HCMA:###################
+global settings stammen aus exp-dateien
+opts werden am anfang aus cmaes_initialize mit default geladen, einfach der gesamte anfangsblock ohne veränderungen
+Nachdem die opts in xacmes noch modifiziert wurden, werden sie nochmal nach cmaes_initialize gereicht (diesmal mit parametern) -> daraus resultiert cur-state
+Danach werden weitere settings gesetzt für bipop und STEP
+STEP-Parameter werden global gesetzt (in STEPalgo und STEPalgos) und initialisiert via mySTEPinit. Unbekannt warum 2 variablen
+
+while schleife mit anzahl der restarts beginnt (default: restarts = 0)
+	algo.aSZ , .iSZ , .nevals = 0
+	.realfunc = 1
+	optModel wird in InitModelParameters initialisiert; Anzahl der Trainingspunkte, Cval und Ci usw.
+	Einstellungen werden von settings nach algo übertragen (Sinn??)
+	algo.ARX wird auf zeros(N,algo.maxArchSize) gesetzt
+	algo.ARF und algo.ARneval werden auf zeros(1,algo.maxArchSize) gesetzt
+	standard cmaes variablen (sigma, pc,ps...) werden initialisiert in cmaes_initializeRun
+	iSTPE = 0
+	
+	bipop settings werden initialisiert
+	
+	innere while schleife; hört auf wenn akzeptabler wert gefunden oder stopflag erreicht; stop kompliziert, wird in cmaes_iteration gesetzt
+		STEP wird durchgeführt
+		Wenn die maximale Anzahl an Evals mit Surrogate erreicht wurde, wird surrogate deaktiviert
+		*if* Surrogate deaktiviert, normale CMAES-iteration
+		*else*
+			*if* noch nicht genug iterationen mit echter funktion erreicht, normale CMAES-iteration
+			*else*
+				algo.coeffs neu berechnen aus optModel-Werten
+				Surrogate bauen (model = buildModel)
+				global curModel = model
+				alle Models werden gespeichert in Models.models; default passiert das NICHT
+				kopie von cur_state in initial_state
+				Surrogate wird iSTEP oft iteriert mit cmaes_iteration; algo.realfunc = 0 damit xacmes.evaluate weiß, das es surrogate benutzt. trotzdem werden einige cur_state-Werte vorher verändert und danch zurückgesetzt.
+				kopie von algo in algo_without_new_points
+				
+				algo.realfunc = 1
+				eine normale CMAES-iteration (das sollte dann die punkte des surrogates enthalten?)
+				kopie von algo in algo_with_new_points
+				
+				model error wird geschätzt
+				crossvalidation wird durchgeführt; default passiert das NICHT; werte werden außerdem im gesamten HCMA nur berechnet, nie für irgendeine überprüfung benutzt...
+				
+				WeDontBelieveInModel wird gesetzt
+				*if* Model schlecht
+					
+				
+				
+				
+				
+		
+
+
+
 algo.aSZ sollte vorher immer mit jedem cur_state.iteration einen größer werden (was soll aSZ darstellen?)
 algo.asZ wird nie größer als algo.maxArchSize
 algo.maxArchSize wird am Anfang auf optModel.MaxTrainingPoints gesetzt und nie geändert
-ARZ scheint der Wurf der nächsten Punkte in Standardnormalverteilung zu sein, aber nur Lambda-Anzahl an Punkten?
+optModel.MaxTrainingPoints wird auf einen relativ willkürlich wirkenden Wert in Abhängigkeit der Dimensionsanzahl gesetzt
+ARZ scheint der Wurf der nächsten Punkte in Standardnormalverteilung zu sein
 ARX scheinen die mit C (hier allerdings durch DiagD, was anscheinend eigenvektoren oder eigenwerte enthält) und sigma umgeformten punkte zu handeln.
+ARF sollten die zu ARX gehörigen funktionswerte sein.
+arindex entspricht der anzahl von ARX
 
-fitfun (was xacmes_evaluate ist) ist verpackt in cur_state.
+fitfun (was xacmes_evaluate ist, welches entweder surrogate oder echte funktion aufruft) ist verpackt in cur_state.
 wird ausgeführt in:
 cmaes_initializeRun(cur_state)
 cmaes_iteration
 
-coeffs sind in initModelParameters.m (dort def_coeff)
+optModel.coeffs sind in initModelParameters.m (dort def_coeff)
 Später können diese auch in xacmes andere werden:
 pcoeff(j) = optModel.xmin(j) + curparams(j) * ( optModel.xmax(j) - optModel.xmin(j));
 
+
+
+
+
+####################RankSVM:##################
 x_training : matrix mit trainingspunkten? N reihen und ntraining spalten
 N : vermutlich dimension?
 ntraining : anzahl der trainingsläufe? ist immer algo.aSZ
