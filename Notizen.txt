@@ -73,6 +73,7 @@ pcoeff(j) = optModel.xmin(j) + curparams(j) * ( optModel.xmax(j) - optModel.xmin
 
 
 ####################RankSVM:##################
+##### ranksvm example code mit comments: http://olivier.chapelle.cc/primal/ranksvm.m
 x_training : matrix mit trainingspunkten? N reihen und ntraining spalten
 N : vermutlich dimension?
 ntraining : anzahl der trainingsläufe? ist immer algo.aSZ
