@@ -20,7 +20,7 @@ namespace mant {
 
     void setKernelParameter(const T kernelParameter);
     
-    void getKernelParameter();
+    T getKernelParameter();
     
     void setIterations(const unsigned int iterations);
     
@@ -59,12 +59,12 @@ namespace mant {
   //
 
   template <typename T>
-  RankingSupportVectorMachine::RankingSupportVectorMachine() noexcept {
+  RankingSupportVectorMachine<T>::RankingSupportVectorMachine() noexcept {
   }
   
   //parameters should already be encoded
   template <typename T>
-  RankingSupportVectorMachine::learn(const arma::Mat<T>& parameters) {
+  void RankingSupportVectorMachine<T>::learn(const arma::Mat<T>& parameters) {
     //init
     this->parameters = parameters;
     this->dimension = parameters.n_rows;
@@ -85,7 +85,7 @@ namespace mant {
   }
 
   template <typename T>
-  void RankingSupportVectorMachine::CalculateTrainingKernelMatrix() {
+  void RankingSupportVectorMachine<T>::CalculateTrainingKernelMatrix() {
     T avrdist = 0;
     for (int i = 0; i < ntraining; i++) {
       K(i, i) = 0;
@@ -112,7 +112,7 @@ namespace mant {
   }
 
   template <typename T>
-  void RankingSupportVectorMachine::OptimizeL() {
+  void RankingSupportVectorMachine<T>::OptimizeL() {
     arma::Col<T> sumAlphaDK = arma::zeros(nAlpha);
     arma::Mat<T> divDK = arma::zeros(nAlpha, nAlpha);
     arma::Mat<T> dK = arma::zeros(nAlpha, nAlpha);
@@ -161,7 +161,7 @@ namespace mant {
   //if HCMA doesn't change them in between.
   //parameters should already be encoded
   template <typename T>
-  void RankingSupportVectorMachine::evaluatePoints(const arma::Mat<T>& points, const arma::Mat<T>& parameters, const arma::Col<T>& rankingDirection, T twoSigmaPow2) {
+  void RankingSupportVectorMachine<T>::evaluatePoints(const arma::Mat<T>& points, const arma::Mat<T>& parameters, const arma::Col<T>& rankingDirection, T twoSigmaPow2) {
     //init
     this->parameters = parameters;
     this->dimension = parameters.n_rows;
@@ -199,47 +199,47 @@ namespace mant {
   }
   
   template <typename T>
-  arma::Col<T>& RankingSupportVectorMachine::getRankingDirection() {
+  arma::Col<T>& RankingSupportVectorMachine<T>::getRankingDirection() {
     return rankingDirection;
   }
   
   template <typename T>
-  arma::Col<T>& RankingSupportVectorMachine::getFitnessForEvaluatedPoints() {
+  arma::Col<T>& RankingSupportVectorMachine<T>::getFitnessForEvaluatedPoints() {
     return fitness;
   }
 
   template <typename T>
-  T RankingSupportVectorMachine::getTwoSigmaPow2() {
+  T RankingSupportVectorMachine<T>::getTwoSigmaPow2() {
     return twoSigmaPow2;
   }
 
   template <typename T>
-  void RankingSupportVectorMachine::setMaximalNumberOfIterations(const unsigned long long maximalNumberOfIterations) {
+  void RankingSupportVectorMachine<T>::setMaximalNumberOfIterations(const unsigned long long maximalNumberOfIterations) {
     this->niter = maximalNumberOfIterations;
   }
 
   template <typename T>
-  void RankingSupportVectorMachine::setUpperBound(const arma::Col<T>& upperBound) {
+  void RankingSupportVectorMachine<T>::setUpperBound(const arma::Col<T>& upperBound) {
     this->upperBound = upperBound;
   }
   
   template <typename T>
-  void RankingSupportVectorMachine::setKernelParameter(T kernelParameter) {
+  void RankingSupportVectorMachine<T>::setKernelParameter(T kernelParameter) {
     this->kernelParameter = kernelParameter;
   }
 
   template <typename T>
-  T RankingSupportVectorMachine::getKernelParameter() const {
+  T RankingSupportVectorMachine<T>::getKernelParameter() {
     return this->kernelParameter;
   }
   
   template <typename T>
-  void RankingSupportVectorMachine::setIterations(const unsigned int iterations) {
+  void RankingSupportVectorMachine<T>::setIterations(const unsigned int iterations) {
     this->niter = iterations;
   }
   
   template <typename T>
-  unsigned int RankingSupportVectorMachine::getIterations() {
+  unsigned int RankingSupportVectorMachine<T>::getIterations() {
     return niter;
   }
 }
