@@ -47,7 +47,7 @@ if (algo.realfunc == 0)     % using Surrogate Fitness Function F^(x)
     if ((Models.imodel == 1) || (npoints == 1))
         Fit = evaluateModel(x_test, npoints, curModel);
     end;
-    if ((Models.imodel > 1) && (npoints > 1))
+    if ((Models.imodel > 1) && (npoints > 1)) %mantella: should never happen since model saving is turned off afaik
         Fit = zeros(1,npoints);
         for i=1:Models.imodel
             locFit = evaluateModel(x_test, npoints, Models.models(i));

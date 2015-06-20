@@ -1,170 +1,223 @@
 namespace mant {
 
-  class RankingSVM {
-    public:
-      explicit RankingSVM(arma::Mat<double> xTraining, unsigned int niter, unsigned int ntraining, arma::Col<double> Ci, arma::Mat<double> invsqrtC, arma::Col<double> xMean) noexcept;
-      void LearningRankN();
-      
-      void SetEpsilon(double epsilon);
-      double GetEpsilon() const;
-      void SetSigmaPow(double sigmaPow);
-      double GetSigmaPow() const;
-      void SetSigmaA(double sigmaA);
-      double GetSigmaA() const;
-      
-    protected:
-      void Encoding();
-      void CalculateTrainingKernelMatrix();
-      void OptimizeL();
-      
-      //RankSVMLearn.cpp Input Variables
-      double sigmaA = 1;
-      double sigmaPow = 1;
-      double epsilon = 1;
-      unsigned int dimension; //N
-      arma::Mat<double> xTraining;
-      unsigned int niter;
-      unsigned int ntraining;
-      arma::Col<double> Ci;
-      arma::Mat<double> invsqrtC;
-      arma::Col<double> xMean;
-      
-      //RankSVMLearn.cpp Output Variables
-      arma::Mat<double> xTrainingEncoded;
-      arma::Col<double> optAlphas;
-      double TwoSigmaPow2 = 0;
-      
-      //RankSVMLearn.cpp Variables Between Functions
-      unsigned int nAlpha; //may need to be int, not sure if ntraining can be 0
-      arma::Mat<double> K;
+  template <typename T>
+  class RankingSupportVectorMachine {
+  public:
+    explicit RankingSupportVectorMachine() noexcept;
+    void learn(const arma::Mat<T>& parameters);
+    
+    void evaluatePoints(const arma::Mat<T>& points, const arma::Mat<T>& parameters, const arma::Col<T>& rankingDirection, T twoSigmaPow2);
+
+    arma::Col<T>& getRankingDirection();
+    
+    arma::Col<T>& getFitnessForEvaluatedPoints();
+    
+    T getTwoSigmaPow2();
+
+    void setMaximalNumberOfIterations(const unsigned long long maximalNumberOfIterations);
+
+    void setUpperBound(const arma::Col<T>& upperBound);
+
+    void setKernelParameter(const T kernelParameter);
+    
+    void getKernelParameter();
+    
+    void setIterations(const unsigned int iterations);
+    
+    unsigned int getIterations();
+
+  protected:
+    void CalculateTrainingKernelMatrix();
+    void OptimizeL();
+
+    //RankSVMLearn.cpp Input Variables
+    T kernelParameter = 1.0; //sigmaA
+    T sigmaPow = 1.0;
+    T epsilon = 1.0;
+    unsigned int dimension; //N
+    arma::Mat<T> parameters;
+    unsigned int niter = 1000;
+    unsigned int ntraining;
+    arma::Col<T> upperBound;
+
+    //RankSVMLearn.cpp Output Variables
+    arma::Col<T> rankingDirection = arma::zeros(ntraining - 1); //optAlphas
+    T twoSigmaPow2 = 0;
+
+    //RankSVMLearn.cpp Variables Between Functions
+    unsigned int nAlpha; //may need to be int, not sure if ntraining can be 0
+    arma::Mat<T> K = arma::zeros(ntraining, ntraining);
+    
+    //RankSVMFunc.cpp
+    arma::Col<T> fitness; //Fit
+    arma::Mat<T> points;
+    T ntest;
   };
 
   //
   // Implementation
   //
 
-  RankingSVM::RankingSVM(arma::Mat<double> xTraining, unsigned int niter, unsigned int ntraining, arma::Col<double> Ci, arma::Mat<double> invsqrtC, arma::Col<double> xMean) noexcept {
-    this->xTraining = xTraining;
-    this->niter = niter;
-    this->ntraining = ntraining;
-    this->Ci = Ci;
-    this->invsqrtC = invsqrtC;
-    this->xMean = xMean;
-    
-    this->dimension = xTraining.n_rows;
-    assert(ntraining==xTraining.n_cols);
-    
-    this->xTrainingEncoded = arma::zeros(this->dimension,ntraining);
-    this->optAlphas = arma::zeros(ntraining-1);
-    
-    K = arma::zeros(ntraining,ntraining);
-    nAlpha = ntraining-1;    
+  template <typename T>
+  RankingSupportVectorMachine::RankingSupportVectorMachine() noexcept {
   }
   
-  void RankingSVM::LearningRankN() {
-    Encoding();
+  //parameters should already be encoded
+  template <typename T>
+  RankingSupportVectorMachine::learn(const arma::Mat<T>& parameters) {
+    //init
+    this->parameters = parameters;
+    this->dimension = parameters.n_rows;
+    this->ntraining == parameters.n_cols;
+    
+    nAlpha = ntraining - 1;
+    
+    //calculate standard upperbound if none was set
+    if(!upperBound) {
+      upperBound = 10e6*(arma::pow(nAlpha-arma::linspace(0,nAlpha-1,nAlpha),3));
+    }
+    
+    //calc kernel
     CalculateTrainingKernelMatrix();
+    
+    //optimize alphas
     OptimizeL();
   }
-  
-  void RankingSVM::Encoding() {
-    for(int i = 0; i < ntraining; i++) {
-      arma::Col<double> dx = xTraining.col(i) - xMean;
-      xTrainingEncoded.col(i) = arma::sum(invsqrtC*dx);
-    }
-  }
-  
-  void RankingSVM::CalculateTrainingKernelMatrix() {
-    double avrdist = 0;
-    for(int i=0; i < ntraining; i++) {
-      K(i,i) = 0;
-      for(int j=i+1; j < ntraining; j++) {
-        K(j,i) = std::pow(arma::norm(xTrainingEncoded.col(i) - xTrainingEncoded.col(j)),2);
-        K(i,j) = K(j,i);
-        avrdist += std::sqrt(K(i,j));
+
+  template <typename T>
+  void RankingSupportVectorMachine::CalculateTrainingKernelMatrix() {
+    T avrdist = 0;
+    for (int i = 0; i < ntraining; i++) {
+      K(i, i) = 0;
+      for (int j = i + 1; j < ntraining; j++) {
+        K(j, i) = std::pow(arma::norm(parameters.col(i) - parameters.col(j)), 2);
+        K(i, j) = K(j, i);
+        avrdist += std::sqrt(K(i, j));
       }
     }
-    
-    avrdist /= (ntraining-1)*ntraining / 2.0;
-    TwoSigmaPow2 = 2 * std::pow((sigmaA * avrdist * sigmaPow),2);
-    
+
+    avrdist /= (ntraining - 1) * ntraining / 2.0;
+    twoSigmaPow2 = 2 * std::pow((kernelParameter * avrdist * sigmaPow), 2);
+
     //the for loops can be combined and the upper assignments to K never made.
     //which would be much more efficient. If arma can do Mat minus Mat,
     //the upper for-loop is completely unnecessary
-    for(int i=0; i < ntraining; i++) {
-      K(i,i) = 1;
-      for(int j = i+1; j < ntraining; j++) {
-        K(j,i) = exp(-K(j,i) / TwoSigmaPow2);
-        K(i,j) = K(j,i);
+    for (int i = 0; i < ntraining; i++) {
+      K(i, i) = 1;
+      for (int j = i + 1; j < ntraining; j++) {
+        K(j, i) = std::exp(-K(j, i) / twoSigmaPow2);
+        K(i, j) = K(j, i);
       }
+    }
+  }
+
+  template <typename T>
+  void RankingSupportVectorMachine::OptimizeL() {
+    arma::Col<T> sumAlphaDK = arma::zeros(nAlpha);
+    arma::Mat<T> divDK = arma::zeros(nAlpha, nAlpha);
+    arma::Mat<T> dK = arma::zeros(nAlpha, nAlpha);
+
+    //there is probably a way to combine all these for loops
+    for (int i = 0; i < nAlpha; i++) {
+      for (int j = 0; j < nAlpha; j++) {
+        dK(j, i) = K(j, i) - K(j + 1, i) - K(j, i + 1) + K(j + 1, i + 1);
+      }
+      rankingDirection(i) = upperBound(i) * (0.95 + 0.05 * arma::randu());
+    }
+
+    for (int i = 0; i < nAlpha; i++) {
+      T sumAlpha = arma::sum(rankingDirection % dK.col(i));
+      sumAlphaDK(i) = (epsilon - sumAlpha) / dK(i, i);
+    }
+
+    for (int i = 0; i < nAlpha; i++) {
+      for (int j = 0; j < nAlpha; j++) {
+        divDK(j, i) = dK(j, i) / dK(j, j);
+      }
+    }
+
+    for (int i = 0; i < niter; i++) {
+      int iMod = i % nAlpha;
+      T newAlpha = rankingDirection(iMod) + sumAlphaDK(iMod);
+      if (newAlpha > upperBound(iMod)) {
+        newAlpha = upperBound(iMod);
+      }
+      if (newAlpha < 0) {
+        newAlpha = 0;
+      }
+      T deltaAlpha = newAlpha - rankingDirection(iMod);
+
+      T dL = deltaAlpha * dK(iMod, iMod) * (sumAlphaDK(iMod) - 0.5 * deltaAlpha);
+
+      if (dL > 0) {
+        sumAlphaDK -= deltaAlpha * divDK.col(iMod);
+        rankingDirection(iMod) = newAlpha;
+      }
+    }
+  }
+
+  //points are ntest*nx
+  //last 3 arguments probably unnecessary, but cannot guarantee at this point
+  //if HCMA doesn't change them in between.
+  //parameters should already be encoded
+  template <typename T>
+  void RankingSupportVectorMachine::evaluatePoints(const arma::Mat<T>& points, const arma::Mat<T>& parameters, const arma::Col<T>& rankingDirection, T twoSigmaPow2) {
+    //init
+    this->parameters = parameters;
+    this->dimension = parameters.n_rows;
+    this->ntraining == parameters.n_cols;
+    
+    this->points = points;
+    
+    this->rankingDirection = rankingDirection;
+    this->twoSigmaPow2 = twoSigmaPow2;
+    
+    //TODO: might be rows, but if that's the case all others are also probably wrong
+    this->ntest = points.n_cols;
+    
+    this->fitness = arma::zeros(ntest);
+    
+    //actual evaluation
+    arma::Col<T> Kvals = arma::zeros(ntraining);
+    for(int i = 0; i < ntest; i++) {
+      arma::Col<T> curPoint = points.col(i);
+      
+      for(int j = 0; j < ntraining; j++) {
+        Kvals(j) = std::exp(-arma::sum(
+            arma::pow(curPoint-parameters.col(j),2)
+            ));
+      }
+      
+      T curFit = 0;
+      for(int j = 0; j<ntraining-1;j++) {
+        if(rankingDirection(j) != 0) {
+          curFit += rankingDirection(j) * (Kvals(j)-Kvals(j+1));
+        }
+      }
+      fitness(i) = curFit;
     }
   }
   
-  void RankingSVM::OptimizeL() {
-    arma::Col<double> sumAlphaDK = arma::zeros(nAlpha);
-    arma::Mat<double> divDK = arma::zeros(nAlpha,nAlpha);
-    arma::Mat<double> dK = arma::zeros(nAlpha,nAlpha);
-    
-    //there is probably a way to combine all these for loops
-    for(int i = 0; i < nAlpha; i++) {
-      for(int j = 0; j < nAlpha; j++) {
-        dK(j,i) = K(j,i) - K(j+1,i) - K(j, i+1) + K(j+1,i+1);
-      }
-      optAlphas(i) = Ci(i) * (0.95 + 0.05 * arma::randu());
-    }
-    
-    for(int i = 0; i < nAlpha; i++) {
-      double sumAlpha = arma::sum(optAlphas % dK.col(i));
-      sumAlphaDK(i) = (epsilon - sumAlpha) / dK(i,i);
-    }
-    
-    for(int i = 0; i < nAlpha; i++) {
-      for(int j = 0; j < nAlpha; j++) {
-        divDK(j,i) = dK(j,i) / dK(j,j);
-      }
-    }
-    
-    for(int i = 0; i < niter; i++) {
-      int iMod = i%nAlpha;
-      double newAlpha = optAlphas(iMod) + sumAlphaDK(iMod);
-      if(newAlpha > Ci(iMod)) {
-        newAlpha = Ci(iMod);
-      }
-      if(newAlpha < 0) {
-        newAlpha = 0;
-      }
-      double deltaAlpha = newAlpha - optAlphas(iMod);
-      
-      double dL = deltaAlpha * dK(iMod,iMod) * (sumAlphaDK(iMod)- 0.5 * deltaAlpha);
-      
-      if(dL > 0) {
-        sumAlphaDK -= deltaAlpha * divDK.col(iMod);
-        optAlphas(iMod) = newAlpha;
-      }
-    }
+  template <typename T>
+  arma::Col<T>& getFitnessForEvaluatedPoints();
+  
+  template <typename T>
+  void RankingSupportVectorMachine::setKernelParameter(T kernelParameter) {
+    this->kernelParameter = kernelParameter;
   }
 
-  void RankingSVM::SetEpsilon(double epsilon) {
-    this->epsilon = epsilon;
+  template <typename T>
+  T RankingSupportVectorMachine::getKernelParameter() const {
+    return this->kernelParameter;
   }
-
-  double RankingSVM::GetEpsilon() const {
-    return epsilon;
+  
+  template <typename T>
+  void RankingSupportVectorMachine::setIterations(const unsigned int iterations) {
+    this->niter = iterations;
   }
-
-  void RankingSVM::SetSigmaPow(double sigmaPow) {
-    this->sigmaPow = sigmaPow;
-  }
-
-  double RankingSVM::GetSigmaPow() const {
-    return sigmaPow;
-  }
-
-  void RankingSVM::SetSigmaA(double sigmaA) {
-    this->sigmaA = sigmaA;
-  }
-
-  double RankingSVM::GetSigmaA() const {
-    return sigmaA;
+  
+  template <typename T>
+  unsigned int RankingSupportVectorMachine::getIterations() {
+    return niter;
   }
 }

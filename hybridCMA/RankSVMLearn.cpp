@@ -1,4 +1,3 @@
-#include "mex.h" 
 #include "math.h"
 void Encoding(double* x, double* x_Encoded, double* invsqrtC, double* xmean, int ntrain, int nx) //x'(i) = C^(-0.5) * ( x(i) - xmean(i) )
 {
