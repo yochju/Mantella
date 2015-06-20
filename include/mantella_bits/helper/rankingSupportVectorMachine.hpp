@@ -199,7 +199,29 @@ namespace mant {
   }
   
   template <typename T>
-  arma::Col<T>& getFitnessForEvaluatedPoints();
+  arma::Col<T>& RankingSupportVectorMachine::getRankingDirection() {
+    return rankingDirection;
+  }
+  
+  template <typename T>
+  arma::Col<T>& RankingSupportVectorMachine::getFitnessForEvaluatedPoints() {
+    return fitness;
+  }
+
+  template <typename T>
+  T RankingSupportVectorMachine::getTwoSigmaPow2() {
+    return twoSigmaPow2;
+  }
+
+  template <typename T>
+  void RankingSupportVectorMachine::setMaximalNumberOfIterations(const unsigned long long maximalNumberOfIterations) {
+    this->niter = maximalNumberOfIterations;
+  }
+
+  template <typename T>
+  void RankingSupportVectorMachine::setUpperBound(const arma::Col<T>& upperBound) {
+    this->upperBound = upperBound;
+  }
   
   template <typename T>
   void RankingSupportVectorMachine::setKernelParameter(T kernelParameter) {
