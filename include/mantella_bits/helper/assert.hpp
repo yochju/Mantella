@@ -1,58 +1,74 @@
 namespace mant {
-  inline bool isRotationMatrix(
-      const arma::Mat<double>& matrix) noexcept;
+  inline void verify(
+      const bool expression,
+      const std::string& errorMessage);
 
-  inline void isRotationMatrix(
-      const std::string& name,
-      const arma::Mat<double>& matrix);
+  template <typename T>
+  bool isRotationMatrix(
+      const arma::Mat<T>& parameter) noexcept;
 
-  inline bool isEqual(
-      const std::size_t firstValue,
-      const std::size_t secondValue) noexcept;
+  inline bool isPermutation(
+      const arma::Col<unsigned int>& parameter,
+      const std::size_t numberOfPermutations,
+      const std::size_t numberOfElements) noexcept;
 
-  inline void isEqual(
-      const std::string& firstName,
-      const std::size_t firstValue,
-      const std::string& secondName,
-      const std::size_t secondValue);
+  //
+  // Implementation
+  //
+      
+  inline void verify(
+      const bool expression,
+      const std::string& errorMessage) {
+    if(!expression) {
+      throw std::logic_error(errorMessage);
+    }   
+  }
 
-  inline bool isRotationMatrix(
-      const arma::Mat<double>& matrix) noexcept {
-    // is suqare?
-    if (!matrix.is_square()) {
+  template <typename T>
+  bool isRotationMatrix(
+      const arma::Mat<T>& parameter) noexcept {
+    // Is the rotation matrix square?
+    if (!parameter.is_square()) {
       return false;
-    // is orthonormal?
-    } else if(arma::any(arma::vectorise(arma::abs(matrix.i() - matrix.t()) > 1.0e-12 * std::max(1.0, std::abs(arma::median(arma::vectorise(matrix))))))) {
+    }
+      
+    // Is its determinant either 1 or -1?
+    if(std::abs(std::abs(arma::det(parameter)) - 1.0) > 1.0e-12) {
       return false;
-    // determinant is either 1 or -1?
-    } else if(std::abs(std::abs(arma::det(matrix)) - 1.0) > 1.0e-12) {
+    }
+      
+    // Is the rotation matrix square?
+    // For (nearly) singular matrices, the inversion might throw an exception.
+    try {
+      if(arma::any(arma::vectorise(arma::abs(parameter.i() - parameter.t()) > 1.0e-12 * std::max(1.0, std::abs(arma::median(arma::vectorise(parameter))))))) {
+        return false;
+      }
+    } catch (...) {
       return false;
     }
 
     return true;
   }
 
-  inline void isRotationMatrix(
-      const std::string& name,
-      const arma::Mat<double>& matrix) {
-    if(!isRotationMatrix(matrix)) {
-      throw std::logic_error(name + " must be a rotation matrix, i.e. it must be square, orthonormal and its determinant be either 1 or -1.");
+  inline bool isPermutation(
+      const arma::Col<unsigned int>& parameter,
+      const std::size_t numberOfPermutations,
+      const std::size_t numberOfElements) noexcept {
+    // Are there as many permutations as expected?
+    if (parameter.n_elem != numberOfPermutations) {
+      return false;
     }
-  }
-
-  inline bool isEqual(
-      const std::size_t firstValue,
-      const std::size_t secondValue) noexcept {
-    return (firstValue == secondValue);
-  }
-
-  inline void isEqual(
-      const std::string& firstName,
-      const std::size_t firstValue,
-      const std::string& secondName,
-      const std::size_t secondValue) {
-    if(!isEqual(firstValue, secondValue)) {
-      throw std::logic_error(firstName + " must be equal to " + secondName);
+    
+    // Are all elements within [0, numberOfElements - 1]?
+    if (arma::any(parameter < 0) || arma::any(parameter > numberOfElements - 1)) {
+      return false;
     }
+    
+    // Are all elements unique?
+    if (static_cast<arma::Col<unsigned int>>(arma::unique(parameter)).n_elem != parameter.n_elem) {
+      return false;
+    }
+    
+    return true;
   }
 }

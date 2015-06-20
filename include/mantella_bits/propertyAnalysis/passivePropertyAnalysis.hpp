@@ -1,24 +1,28 @@
 namespace mant {
-  template <typename ParameterType>
-  class PassivePropertyAnalysis : public PropertyAnalysis<ParameterType> {
+  template <typename T = double>
+  class PassivePropertyAnalysis : public PropertyAnalysis<T> {
+    static_assert(std::is_floating_point<T>::value, "The parameter type T must be a floating point type.");
+    
     public:
-      using PropertyAnalysis<ParameterType>::PropertyAnalysis;
-
+      using PropertyAnalysis<T>::PropertyAnalysis;
+      
       void analyse(
-          const std::unordered_map<arma::Col<double>, double, Hash, IsEqual>& parameterToObjectiveValueMapping) noexcept;
+          const std::unordered_map<arma::Col<T>, double, Hash<T>, IsEqual<T>>& parameterToObjectiveValueMappings);
 
     protected:
       virtual void analyseImplementation(
-          const std::unordered_map<arma::Col<double>, double, Hash, IsEqual>& parameterToObjectiveValueMappings) noexcept = 0;
+          const std::unordered_map<arma::Col<T>, double, Hash<T>, IsEqual<T>>& parameterToObjectiveValueMappings) noexcept = 0;
   };
 
   //
   // Implementation
   //
 
-  template <typename ParameterType>
-  void PassivePropertyAnalysis<ParameterType>::analyse(
-      const std::unordered_map<arma::Col<double>, double, Hash, IsEqual>& parameterToObjectiveValueMapping) noexcept {
-    analyseImplementation(parameterToObjectiveValueMapping);
+  template <typename T>
+  void PassivePropertyAnalysis<T>::analyse(
+      const std::unordered_map<arma::Col<T>, double, Hash<T>, IsEqual<T>>& parameterToObjectiveValueMappings) {
+    verify(parameterToObjectiveValueMappings.size() > 1, "");
+    
+    analyseImplementation(parameterToObjectiveValueMappings);
   }
 }

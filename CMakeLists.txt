@@ -10,9 +10,8 @@
 # Authors:
 #   Sebastian Niemann - Lead developer
 #   Romeo Shuka - Developer
+#   Daniel Kiechle - Software tester
 #   Wolff Bock von Wülfingen - Developer
-#   Daniel Kiechle - Developer / Software tester
-#   Oskar Pusz - Developer
 #------------------------------------------------------------------------------
 cmake_minimum_required(VERSION 2.8.2 FATAL_ERROR)
 
@@ -30,33 +29,41 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 # Development build options
 option(BUILD_TESTS "Build tests" OFF)
 option(RUN_TESTS "Run (and build) tests" OFF)
+option(USE_MPI "Use MPI-support" OFF)
 option(MEASURE_CODE_COVERAGE "Measure code coverage" OFF)
+
 if(RUN_TESTS)
   set(BUILD_TESTS ON)
 endif()
-mark_as_advanced(BUILD_TESTS RUN_TESTS MEASURE_CODE_COVERAGE)
 
-if(WIN32)
-  message(STATUS "")
-  message(STATUS "INSTALLATION INSTRUCTION: Mantella is a header-only C++11 library, it is only required to copy the include/ directory into a folder searched by the #include preprocessor directive.")
-  message(STATUS "")
-else()
+mark_as_advanced(
+ BUILD_TESTS
+ RUN_TESTS
+ USE_MPI
+ MEASURE_CODE_COVERAGE
+)
+
+message(STATUS "")
+message(STATUS "INSTALLATION INSTRUCTION: Mantella is a header-only C++11 library, it is only required to copy the include/ directory into a folder searched by the #include preprocessor directive.")
+if(UNIX)
+  message(STATUS "Or use *sudo make install* as a shortcut.")
+endif()
+message(STATUS "")
+
+if(UNIX)
   # ---------------
   # PREPARE LIBRARY
   # ---------------
+  
   message(STATUS "NOTICE: Checking prerequirements for the Mantella library (version: ${MANTELLA_VERSION}).")
     
   # Locate third party libraries and headers
   find_package(Armadillo 4.650.0 REQUIRED) # Armadillo C++
 
-  message(STATUS "")
-  message(STATUS "INSTALLATION INSTRUCTION: Mantella is a header-only C++11 library, it is only required to copy the include/ directory into a folder searched by the #include preprocessor directive (or use *sudo make install* as a shortcut).")
-  message(STATUS "")
-
   # ----------
   # INSTALLING
   # ----------
-
+  
   if(NOT INSTALL_INCLUDE_DIR)
     set(INSTALL_INCLUDE_DIR "include")
   endif()
@@ -82,7 +89,7 @@ if(BUILD_TESTS)
   # Display all warnings
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
-  # Use native machine features (SSE3, SSE4, AVX, ...), if possible and compiled with Armadillo
+  # Use native machine features (SSE3, SSE4, AVX, ...) if possible
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 
   if(MEASURE_CODE_COVERAGE)
@@ -91,9 +98,6 @@ if(BUILD_TESTS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage")
   endif()
 
-  # Include our own headers
-  include_directories(${PROJECT_SOURCE_DIR}/include)
-  
   # Locate third party libraries and headers
   if(WIN32)
     find_library(ARMADILLO_LIBRARIES openblas HINTS "C:/Program\ Files/OpenBLAS/lib")
@@ -102,25 +106,27 @@ if(BUILD_TESTS)
   else()
     find_package(Armadillo 4.650.0 REQUIRED) # Armadillo C++
     find_package(Catch REQUIRED) # Catch (header only)
+    
+    if(USE_MPI)
+      find_package(MPI REQUIRED) # MPI
+    endif()
   endif()
   
-  message(STATUS "ARMADILLO_LIBRARIES: ${ARMADILLO_LIBRARIES}")
-  message(STATUS "ARMADILLO_INCLUDE_DIR: ${ARMADILLO_INCLUDE_DIR}")
-  message(STATUS "CATCH_INCLUDE_DIRS: ${CATCH_INCLUDE_DIRS}")
+  # Include Mantella
+  include_directories(${PROJECT_SOURCE_DIR}/include)
   
   # Include third party headers
   include_directories(${ARMADILLO_INCLUDE_DIR}) # Armadillo C++
   include_directories(${CATCH_INCLUDE_DIRS}) # Catch
-
-  # Include headers
-  include_directories(${PROJECT_SOURCE_DIR}/test) # MANTELLA tests
+  if(USE_MPI)
+    include_directories(${MPI_INCLUDE_PATH}) # MPI
+  endif()
 
   # Compile the optimisation library tests
   # All paths must start with "test/"
   add_executable(libraryTest
     test/main.cpp
     test/helper/testRng.cpp
-    test/helper/testFilesystem.cpp
     test/helper/testGeometry.cpp
     test/helper/testPrintable.cpp
     test/helper/testQuasiRandomSequence.cpp
@@ -128,362 +134,125 @@ if(BUILD_TESTS)
     test/helper/testSetTheory.cpp
     test/helper/testString.cpp
     test/helper/testUnorderedContainer.cpp
-    test/testDistanceFunction.cpp
-    test/distanceFunction/testEuclideanDistance.cpp
-    test/distanceFunction/testHammingDistance.cpp
-    test/distanceFunction/testInfinityNorm.cpp
-    test/distanceFunction/testManhattanDistance.cpp
     test/testOptimisationProblem.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testAttractiveSectorFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testBentCigarFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testBuecheRastriginFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testCompositeGriewankRosenbrockFunctionF8F2.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testDifferentPowersFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testDiscusFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testEllipsoidalFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testEllipsoidalFunctionRotated.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testGallaghersGaussian101mePeaksFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testGallaghersGaussian21hiPeaksFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testKatsuuraFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testLinearSlope.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testLunacekBiRastriginFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testRastriginFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testRastriginFunctionRotated.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testRosenbrockFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testRosenbrockFunctionRotated.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testSchaffersF7Function.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testSchaffersF7FunctionIllConditioned.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testSchwefelFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testSharpRidgeFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testSphereFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testStepEllipsoidalFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2009/testWeierstrassFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testAttractiveSectorFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testBentCigarFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testBuecheRastriginFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testCompositeGriewankRosenbrockFunctionF8F2.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testDifferentPowersFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testDiscusFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testEllipsoidalFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testEllipsoidalFunctionRotated.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testGallaghersGaussian101mePeaksFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testGallaghersGaussian21hiPeaksFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testKatsuuraFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testLinearSlope.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testLunacekBiRastriginFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testRastriginFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testRastriginFunctionRotated.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testRosenbrockFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testRosenbrockFunctionRotated.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testSchaffersF7Function.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testSchaffersF7FunctionIllConditioned.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testSchwefelFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testSharpRidgeFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testSphereFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testStepEllipsoidalFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2010/testWeierstrassFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testAttractiveSectorFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testBentCigarFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testBuecheRastriginFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testCompositeGriewankRosenbrockFunctionF8F2.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testDifferentPowersFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testDiscusFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testEllipsoidalFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testEllipsoidalFunctionRotated.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testGallaghersGaussian101mePeaksFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testGallaghersGaussian21hiPeaksFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testKatsuuraFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testLinearSlope.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testLunacekBiRastriginFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testRastriginFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testRastriginFunctionRotated.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testRosenbrockFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testRosenbrockFunctionRotated.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testSchaffersF7Function.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testSchaffersF7FunctionIllConditioned.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testSchwefelFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testSharpRidgeFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testSphereFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testStepEllipsoidalFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2012/testWeierstrassFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testAttractiveSectorFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testBentCigarFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testBuecheRastriginFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testCompositeGriewankRosenbrockFunctionF8F2.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testDifferentPowersFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testDiscusFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testEllipsoidalFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testEllipsoidalFunctionRotated.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testGallaghersGaussian101mePeaksFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testGallaghersGaussian21hiPeaksFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testKatsuuraFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testLinearSlope.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testLunacekBiRastriginFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testRastriginFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testRastriginFunctionRotated.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testRosenbrockFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testRosenbrockFunctionRotated.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testSchaffersF7Function.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testSchaffersF7FunctionIllConditioned.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testSchwefelFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testSharpRidgeFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testSphereFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testStepEllipsoidalFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2013/testWeierstrassFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testAttractiveSectorFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testBentCigarFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testBuecheRastriginFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testCompositeGriewankRosenbrockFunctionF8F2.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testDifferentPowersFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testDiscusFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testEllipsoidalFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testEllipsoidalFunctionRotated.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testGallaghersGaussian101mePeaksFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testGallaghersGaussian21hiPeaksFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testKatsuuraFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testLinearSlope.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testLunacekBiRastriginFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testRastriginFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testRastriginFunctionRotated.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testRosenbrockFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testRosenbrockFunctionRotated.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testSchaffersF7Function.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testSchaffersF7FunctionIllConditioned.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testSchwefelFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testSharpRidgeFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testSphereFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testStepEllipsoidalFunction.cpp
-    test/optimisationProblem/blackBoxOptimisationBenchmark2015/testWeierstrassFunction.cpp
-    test/testOptimisationAlgorithm.cpp
-    test/testPropertyAnalysis.cpp
-    test/testPropertiesEstimation.cpp
-#        test/optimisationAlgorithm/trajectoryBasedOptimisationAlgorithm/testHillClimbing.cpp
-#        test/optimisationAlgorithm/trajectoryBasedOptimisationAlgorithm/testSimulatedAnnealing.cpp
-#        test/optimisationAlgorithm/trajectoryBasedOptimisationAlgorithm/testHookeJeeves.cpp
+    test/optimisationProblem/blackBoxOptimisationBenchmark/testAttractiveSectorFunction.cpp
+    test/optimisationProblem/blackBoxOptimisationBenchmark/testBentCigarFunction.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testBuecheRastriginFunction.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testCompositeGriewankRosenbrockFunctionF8F2.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testDifferentPowersFunction.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testDiscusFunction.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testEllipsoidalFunction.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testEllipsoidalFunctionRotated.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testGallaghersGaussian101mePeaksFunction.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testGallaghersGaussian21hiPeaksFunction.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testKatsuuraFunction.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testLinearSlope.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testLunacekBiRastriginFunction.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testRastriginFunction.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testRastriginFunctionRotated.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testRosenbrockFunction.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testRosenbrockFunctionRotated.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testSchaffersF7Function.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testSchaffersF7FunctionIllConditioned.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testSchwefelFunction.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testSharpRidgeFunction.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testSphereFunction.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testStepEllipsoidalFunction.cpp
+#   test/optimisationProblem/blackBoxOptimisationBenchmark/testWeierstrassFunction.cpp
   )
 
   # Link against third party libraries
   target_link_libraries(libraryTest ${ARMADILLO_LIBRARIES}) # Armadillo C++
+  if(USE_MPI)
+    target_link_libraries(libraryTest ${MPI_C_LIBRARIES}) # MPI
+  endif()
 
   if(RUN_TESTS)
     message(STATUS "NOTICE: Automatically running all tests after building them.")
 
-    add_custom_command(TARGET libraryTest POST_BUILD COMMAND libraryTest ${PROJECT_SOURCE_DIR}/test)
+    if(USE_MPI)
+      add_custom_command(TARGET libraryTest POST_BUILD COMMAND mpiexec -n 4 ${EXECUTABLE_OUTPUT_PATH}/libraryTest ${PROJECT_SOURCE_DIR}/test)
+    else()
+      add_custom_command(TARGET libraryTest POST_BUILD COMMAND libraryTest ${PROJECT_SOURCE_DIR}/test)
+    endif()
   endif()
 endif()
 
 # ---------------------
 # Qt Creator workaround
 # ---------------------
+
 add_custom_target(QtWorkaround SOURCES
   # Library
   include/mantella
   include/mantella_bits/helper/assert.hpp
   include/mantella_bits/helper/rng.hpp
-  include/mantella_bits/helper/cereal.hpp
-  include/mantella_bits/helper/filesystem.hpp
   include/mantella_bits/helper/geometry.hpp
   include/mantella_bits/helper/printable.hpp
   include/mantella_bits/helper/quasiRandomSequence.hpp
   include/mantella_bits/helper/random.hpp
-  include/mantella_bits/helper/regression.hpp
   include/mantella_bits/helper/setTheory.hpp
   include/mantella_bits/helper/string.hpp
-  include/mantella_bits/helper/trajectory.hpp
   include/mantella_bits/helper/unorderedContainer.hpp
   include/mantella_bits/helper/rankingSupportVectorMachine.hpp
-  include/mantella_bits/distanceFunction.hpp
-  include/mantella_bits/distanceFunction/euclideanDistance.hpp
-  include/mantella_bits/distanceFunction/hammingDistance.hpp
-  include/mantella_bits/distanceFunction/infinityNorm.hpp
-  include/mantella_bits/distanceFunction/manhattanDistance.hpp
   include/mantella_bits/optimisationProblem.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/attractiveSectorFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/bentCigarFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/buecheRastriginFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/compositeGriewankRosenbrockFunctionF8F2.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/differentPowersFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/discusFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/ellipsoidalFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/ellipsoidalFunctionRotated.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/gallaghersGaussian101mePeaksFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/gallaghersGaussian21hiPeaksFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/katsuuraFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/linearSlope.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/lunacekBiRastriginFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/rastriginFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/rastriginFunctionRotated.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/rosenbrockFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/rosenbrockFunctionRotated.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/schaffersF7Function.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/schaffersF7FunctionIllConditioned.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/schwefelFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/sharpRidgeFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/sphereFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/stepEllipsoidalFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2009/weierstrassFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/attractiveSectorFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/bentCigarFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/buecheRastriginFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/compositeGriewankRosenbrockFunctionF8F2.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/differentPowersFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/discusFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/ellipsoidalFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/ellipsoidalFunctionRotated.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/gallaghersGaussian101mePeaksFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/gallaghersGaussian21hiPeaksFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/katsuuraFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/linearSlope.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/lunacekBiRastriginFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/rastriginFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/rastriginFunctionRotated.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/rosenbrockFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/rosenbrockFunctionRotated.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/schaffersF7Function.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/schaffersF7FunctionIllConditioned.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/schwefelFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/sharpRidgeFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/sphereFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/stepEllipsoidalFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2010/weierstrassFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/attractiveSectorFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/bentCigarFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/buecheRastriginFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/compositeGriewankRosenbrockFunctionF8F2.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/differentPowersFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/discusFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/ellipsoidalFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/ellipsoidalFunctionRotated.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/gallaghersGaussian101mePeaksFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/gallaghersGaussian21hiPeaksFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/katsuuraFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/linearSlope.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/lunacekBiRastriginFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/rastriginFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/rastriginFunctionRotated.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/rosenbrockFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/rosenbrockFunctionRotated.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/schaffersF7Function.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/schaffersF7FunctionIllConditioned.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/schwefelFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/sharpRidgeFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/sphereFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/stepEllipsoidalFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2012/weierstrassFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/attractiveSectorFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/bentCigarFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/buecheRastriginFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/compositeGriewankRosenbrockFunctionF8F2.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/differentPowersFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/discusFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/ellipsoidalFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/ellipsoidalFunctionRotated.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/gallaghersGaussian101mePeaksFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/gallaghersGaussian21hiPeaksFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/katsuuraFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/linearSlope.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/lunacekBiRastriginFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/rastriginFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/rastriginFunctionRotated.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/rosenbrockFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/rosenbrockFunctionRotated.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/schaffersF7Function.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/schaffersF7FunctionIllConditioned.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/schwefelFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/sharpRidgeFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/sphereFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/stepEllipsoidalFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2013/weierstrassFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/attractiveSectorFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/bentCigarFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/buecheRastriginFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/compositeGriewankRosenbrockFunctionF8F2.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/differentPowersFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/discusFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/ellipsoidalFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/ellipsoidalFunctionRotated.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/gallaghersGaussian101mePeaksFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/gallaghersGaussian21hiPeaksFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/katsuuraFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/linearSlope.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/lunacekBiRastriginFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/rastriginFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/rastriginFunctionRotated.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/rosenbrockFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/rosenbrockFunctionRotated.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/schaffersF7Function.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/schaffersF7FunctionIllConditioned.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/schwefelFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/sharpRidgeFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/sphereFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/stepEllipsoidalFunction.hpp
-  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark2015/weierstrassFunction.hpp
-  include/mantella_bits/optimisationProblem/robotic/model/parallelKinematicMachine3PRPR.hpp
-  include/mantella_bits/optimisationProblem/robotic/model/parallelKinematicMachine3PRRR.hpp
-  include/mantella_bits/optimisationProblem/robotic/model/parallelKinematicMachine3PRUS.hpp
-  include/mantella_bits/optimisationProblem/robotic/model/parallelKinematicMachine3PUPS.hpp
-  include/mantella_bits/optimisationProblem/robotic/model/parallelKinematicMachine4PRUS.hpp
-  include/mantella_bits/optimisationProblem/robotic/model/parallelKinematicMachine6PRUS.hpp
-  include/mantella_bits/optimisationProblem/robotic/model/parallelKinematicMachine6PUPS.hpp
-  include/mantella_bits/optimisationProblem/robotic/model/multiLevelStewartPlatform.hpp
-  include/mantella_bits/optimisationProblem/robotic/poseAccuracy.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/attractiveSectorFunction.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/bentCigarFunction.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/buecheRastriginFunction.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/compositeGriewankRosenbrockFunctionF8F2.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/differentPowersFunction.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/discusFunction.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/ellipsoidalFunction.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/ellipsoidalFunctionRotated.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/gallaghersGaussian101mePeaksFunction.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/gallaghersGaussian21hiPeaksFunction.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/katsuuraFunction.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/linearSlope.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/lunacekBiRastriginFunction.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/rastriginFunction.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/rastriginFunctionRotated.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/rosenbrockFunction.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/rosenbrockFunctionRotated.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/schaffersF7Function.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/schaffersF7FunctionIllConditioned.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/schwefelFunction.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/sharpRidgeFunction.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/sphereFunction.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/stepEllipsoidalFunction.hpp
+  include/mantella_bits/optimisationProblem/blackBoxOptimisationBenchmark/weierstrassFunction.hpp
+  include/mantella_bits/optimisationProblem/robotic/robotModel.hpp
+  include/mantella_bits/optimisationProblem/robotic/robotModel/parallelKinematicMachine3PRPR.hpp
+  include/mantella_bits/optimisationProblem/robotic/robotModel/parallelKinematicMachine3PRRR.hpp
+  include/mantella_bits/optimisationProblem/robotic/robotModel/parallelKinematicMachine3PRUS.hpp
+  include/mantella_bits/optimisationProblem/robotic/robotModel/parallelKinematicMachine3PUPS.hpp
+  include/mantella_bits/optimisationProblem/robotic/robotModel/parallelKinematicMachine4PRUS.hpp
+  include/mantella_bits/optimisationProblem/robotic/robotModel/parallelKinematicMachine6PRUS.hpp
+  include/mantella_bits/optimisationProblem/robotic/robotModel/parallelKinematicMachine6PUPS.hpp
+  include/mantella_bits/optimisationProblem/robotic/robotModel/multiLevelStewartPlatform.hpp
+  include/mantella_bits/optimisationProblem/robotic/endEffectorPoseError.hpp
   include/mantella_bits/optimisationAlgorithm.hpp
   include/mantella_bits/optimisationAlgorithm/samplingBasedOptimisationAlgorithm.hpp
   include/mantella_bits/optimisationAlgorithm/samplingBasedOptimisationAlgorithm/gridSearch.hpp
-  include/mantella_bits/optimisationAlgorithm/samplingBasedOptimisationAlgorithm/multiResolutionGridSearch.hpp
   include/mantella_bits/optimisationAlgorithm/samplingBasedOptimisationAlgorithm/randomSearch.hpp
   include/mantella_bits/optimisationAlgorithm/trajectoryBasedOptimisationAlgorithm.hpp
   include/mantella_bits/optimisationAlgorithm/trajectoryBasedOptimisationAlgorithm/hillClimbing.hpp
   include/mantella_bits/optimisationAlgorithm/trajectoryBasedOptimisationAlgorithm/hookeJeevesAlgorithm.hpp
   include/mantella_bits/optimisationAlgorithm/trajectoryBasedOptimisationAlgorithm/simulatedAnnealing.hpp
   include/mantella_bits/optimisationAlgorithm/populationBasedOptimisationAlgorithm.hpp
-  include/mantella_bits/optimisationAlgorithm/populationBasedOptimisationAlgorithm/covarianceMatrixAdaptationEvolutionStrategy.hpp
-  include/mantella_bits/optimisationAlgorithm/populationBasedOptimisationAlgorithm/multilevelCoordinateSearch.hpp
-  include/mantella_bits/optimisationAlgorithm/populationBasedOptimisationAlgorithm/roleBasedImitationAlgorithm.hpp
   include/mantella_bits/optimisationAlgorithm/populationBasedOptimisationAlgorithm/standardParticleSwarmOptimisation2011.hpp
-  include/mantella_bits/optimisationAlgorithm/populationBasedOptimisationAlgorithm/parallelAlgorithm.hpp
-  include/mantella_bits/optimisationAlgorithm/populationBasedOptimisationAlgorithm/parallelAlgorithm/parallelStandardParticleSwarmOptimisation2011.hpp
-  include/mantella_bits/property.hpp
-  include/mantella_bits/property/correlationProperty.hpp
-  include/mantella_bits/property/continuityProperty.hpp
-  include/mantella_bits/property/continuityProperty/lipschitzContinuityProperty.hpp
-  include/mantella_bits/property/functionModelProperty.hpp
-  include/mantella_bits/property/functionModelProperty/linearFunctionModelProperty.hpp
-  include/mantella_bits/property/functionModelProperty/quadraticFunctionModelProperty.hpp
-  include/mantella_bits/property/separabilityProperty.hpp
-  include/mantella_bits/property/separabilityProperty/additiveSeparabilityProperty.hpp
-  include/mantella_bits/property/separabilityProperty/multiplicativeSeparabilityProperty.hpp
-  include/mantella_bits/property/proportionalityProperty.hpp
-  include/mantella_bits/property/proportionalityProperty/linearProportionalityProperty.hpp
   include/mantella_bits/propertyAnalysis.hpp
   include/mantella_bits/propertyAnalysis/passivePropertyAnalysis.hpp
-  include/mantella_bits/propertyAnalysis/passivePropertyAnalysis/correlationAnalysis.hpp
-  include/mantella_bits/propertyAnalysis/passivePropertyAnalysis/correlationAnalysis/fitnessDistanceCorrelationAnalysis.hpp
-  include/mantella_bits/propertyAnalysis/passivePropertyAnalysis/continuityAnalysis.hpp
-  include/mantella_bits/propertyAnalysis/passivePropertyAnalysis/continuityAnalysis/lipschitzContinuityAnalysis.hpp
-  include/mantella_bits/propertyAnalysis/passivePropertyAnalysis/continuityAnalysis/lipschitzContinuityAnalysis/directLipschitzContinuityAnalysis.hpp
-  include/mantella_bits/propertyAnalysis/passivePropertyAnalysis/functionModelAnalysis.hpp
-  include/mantella_bits/propertyAnalysis/passivePropertyAnalysis/functionModelAnalysis/linearFunctionModelAnalysis.hpp
-  include/mantella_bits/propertyAnalysis/passivePropertyAnalysis/functionModelAnalysis/linearFunctionModelAnalysis/ordinaryLeastSquaresLinearFunctionModelAnalysis.hpp
-  include/mantella_bits/propertyAnalysis/passivePropertyAnalysis/functionModelAnalysis/quadraticFunctionModelAnalysis.hpp
-  include/mantella_bits/propertyAnalysis/passivePropertyAnalysis/functionModelAnalysis/quadraticFunctionModelAnalysis/ordinaryLeastSquaresQuadraticFunctionModelAnalysis.hpp
+  include/mantella_bits/propertyAnalysis/passivePropertyAnalysis/fitnessDistanceCorrelationAnalysis.hpp
+  include/mantella_bits/propertyAnalysis/passivePropertyAnalysis/neighbourFitnessCorrelationAnalysis.hpp
+  include/mantella_bits/propertyAnalysis/passivePropertyAnalysis/lipschitzContinuityAnalysis.hpp
+  include/mantella_bits/propertyAnalysis/passivePropertyAnalysis/hoelderContinuityAnalysis.hpp
+  include/mantella_bits/propertyAnalysis/passivePropertyAnalysis/linearFunctionModelAnalysis.hpp
+  include/mantella_bits/propertyAnalysis/passivePropertyAnalysis/quadraticFunctionModelAnalysis.hpp
   include/mantella_bits/propertyAnalysis/activePropertyAnalysis.hpp
-  include/mantella_bits/propertyAnalysis/activePropertyAnalysis/separabilityAnalysis.hpp
-  include/mantella_bits/propertyAnalysis/activePropertyAnalysis/separabilityAnalysis/additiveSeparabilityAnalysis.hpp
-  include/mantella_bits/propertyAnalysis/activePropertyAnalysis/separabilityAnalysis/additiveSeparabilityAnalysis/directAdditiveSeparabilityAnalysis.hpp
-  include/mantella_bits/propertyAnalysis/activePropertyAnalysis/separabilityAnalysis/multiplicativeSeparabilityAnalysis.hpp
-  include/mantella_bits/propertyAnalysis/activePropertyAnalysis/separabilityAnalysis/multiplicativeSeparabilityAnalysis/directMultiplicativeSeparabilityAnalysis.hpp
-  include/mantella_bits/propertyAnalysis/activePropertyAnalysis/proportionalityAnalysis.hpp
-  include/mantella_bits/propertyAnalysis/activePropertyAnalysis/proportionalityAnalysis/linearProportionalityAnalysis.hpp
-  include/mantella_bits/propertyAnalysis/activePropertyAnalysis/proportionalityAnalysis/linearProportionalityAnalysis/directLinearProportionalityAnalysis.hpp
-  include/mantella_bits/propertiesEstimation.hpp
-  include/mantella_bits/propertiesEstimation/shapeEstimation.hpp
-  include/mantella_bits/propertiesEstimation/dimensionalityEstimation.hpp
+  include/mantella_bits/propertyAnalysis/activePropertyAnalysis/additiveSeparabilityAnalysis.hpp
+  include/mantella_bits/propertyAnalysis/activePropertyAnalysis/multiplicativeSeparabilityAnalysis.hpp
+  include/mantella_bits/propertyAnalysis/activePropertyAnalysis/linearProportionalityAnalysis.hpp
   # Tests
   test/helper.hpp
 )
