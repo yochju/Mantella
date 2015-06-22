@@ -38,15 +38,15 @@ namespace mant {
     arma::Mat<T> parameters;
     unsigned int niter = 1000;
     unsigned int ntraining;
-    arma::Col<T> upperBound;
+    arma::Col<T> upperBound; //Ci
 
     //RankSVMLearn.cpp Output Variables
-    arma::Col<T> rankingDirection = arma::zeros(ntraining - 1); //optAlphas
+    arma::Col<T> rankingDirection; //optAlphas
     T twoSigmaPow2 = 0;
 
     //RankSVMLearn.cpp Variables Between Functions
     unsigned int nAlpha; //may need to be int, not sure if ntraining can be 0
-    arma::Mat<T> K = arma::zeros(ntraining, ntraining);
+    arma::Mat<T> K;
     
     //RankSVMFunc.cpp
     arma::Col<T> fitness; //Fit
@@ -60,6 +60,7 @@ namespace mant {
 
   template <typename T>
   RankingSupportVectorMachine<T>::RankingSupportVectorMachine() noexcept {
+    upperBound = -arma::ones(1);
   }
   
   //parameters should already be encoded
@@ -68,12 +69,15 @@ namespace mant {
     //init
     this->parameters = parameters;
     this->dimension = parameters.n_rows;
-    this->ntraining == parameters.n_cols;
+    this->ntraining = parameters.n_cols;
     
     nAlpha = ntraining - 1;
     
+    rankingDirection = arma::zeros(ntraining - 1);
+    K = arma::zeros(ntraining, ntraining);
+    
     //calculate standard upperbound if none was set
-    if(!upperBound) {
+    if(upperBound(0) == -1 && upperBound.n_elem == 1) {
       upperBound = 10e6*(arma::pow(nAlpha-arma::linspace(0,nAlpha-1,nAlpha),3));
     }
     
