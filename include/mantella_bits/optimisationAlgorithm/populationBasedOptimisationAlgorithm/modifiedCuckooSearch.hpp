@@ -1,8 +1,8 @@
 namespace mant {
   template <typename T>
-  class ModifiedModifiedCuckooSearch : public PopulationBasedOptimisationAlgorithm<T> {
+  class ModifiedCuckooSearch : public PopulationBasedOptimisationAlgorithm<T> {
     public:
-      explicit ModifiedModifiedCuckooSearch(
+      explicit ModifiedCuckooSearch(
           const std::shared_ptr<OptimisationProblem<T>> optimisationProblem,
           const unsigned int populationSize) noexcept;
 		  
@@ -21,6 +21,14 @@ namespace mant {
       double maxLevyStepSize_;
 
       void optimiseImplementation() override;
+			
+			virtual arma::Col<T> levyFlight(
+					const arma::Col<T> startingPoint,
+					const double levyStepSize) noexcept;
+
+			virtual unsigned int getRandomTopNest() noexcept;
+			
+			virtual unsigned int getRandomNest() noexcept;
   };
 
   //
@@ -28,7 +36,7 @@ namespace mant {
   //
 
 	template <typename T>
-  ModifiedModifiedCuckooSearch<T>::ModifiedCuckooSearch(
+  ModifiedCuckooSearch<T>::ModifiedCuckooSearch(
       const std::shared_ptr<OptimisationProblem<T>> optimisationProblem,
       const unsigned int populationSize) noexcept
     : PopulationBasedOptimisationAlgorithm<T>(optimisationProblem, populationSize) {
@@ -49,17 +57,17 @@ namespace mant {
       this->updateBestParameter(nests.col(n), this->getSoftConstraintsValue(nests.col(n)), objectiveValues(n));
     }
     
-		unsigned int rankIndex;
     while(!this->isFinished() && !this->isTerminated()) {
 			++this->numberOfIterations_;
 			arma::Col<unsigned int> indices = arma::sort_index(objectiveValues);
+			if(this->numberOfIterations_ < 300)std::cout << objectiveValues << "\n" << indices << std::endl;
 			
 			for(std::size_t i = std::ceil((1 - worstNestPortion_) * this->populationSize_); i < this->populationSize_; ++i) {
 				++this->numberOfIterations_;
 				double levyStepSize = maxLevyStepSize_ / std::sqrt(this->numberOfIterations_);	
 				
-				nests.col(indices(i)) = levyFlight(indices(i), levyStepSize);
-				objectiveValues(indices(i)) = this->getObjectiveValue(nests.col(n));
+				nests.col(indices(i)) = levyFlight(nests.col(indices(i)), levyStepSize);
+				objectiveValues(indices(i)) = this->getObjectiveValue(nests.col(indices(i)));
 				this->updateBestParameter(nests.col(indices(i)), 0.0, objectiveValues(indices(i)));
 			}
 			
@@ -69,24 +77,24 @@ namespace mant {
 				if(randTopNest = indices(i)) {
 					double levyStepSize = maxLevyStepSize_ / std::pow(this->numberOfIterations_, 2);
 					
-					const arma::Col<T>& cuckooCandidate = levyFlight(indices(i), levyStepSize);
+					const arma::Col<T>& cuckooCandidate = levyFlight(nests.col(indices(i)), levyStepSize);
 					const double objectiveValue = this->getObjectiveValue(cuckooCandidate);
 					
 					unsigned int randNest = getRandomNest();
 					if(objectiveValue < objectiveValues(randNest)) {
-						nests(randNest) = cuckooCandidate;
+						nests.col(randNest) = cuckooCandidate;
 						objectiveValues(randNest) = objectiveValue;
 						this->updateBestParameter(cuckooCandidate, 0.0, objectiveValue);
 					}
 				}
 				else {
 					//generating new Nest on the line between the two chosen Nests
-					const arma::Col<T>& cuckooCandidate = arma::abs(nests(indices(i)) - nests(randTopNest)) / goldenRatio;
+					const arma::Col<T>& cuckooCandidate = arma::abs(nests.col(indices(i)) - nests.col(randTopNest)) / goldenRatio;
 					const double objectiveValue = this->getObjectiveValue(cuckooCandidate);
 					
 					unsigned int randNest = getRandomNest();
 					if(objectiveValue < objectiveValues(randNest)) {
-						nests(randNest) = cuckooCandidate;
+						nests.col(randNest) = cuckooCandidate;
 						objectiveValues(randNest) = objectiveValue;
 						this->updateBestParameter(cuckooCandidate, 0.0, objectiveValue);
 					}
@@ -94,29 +102,43 @@ namespace mant {
 			}
     }
   }
-	//TODO random funktionen und levyFlight funktion
 	
+	template <typename T>
+	arma::Col<T> ModifiedCuckooSearch<T>::levyFlight(
+			const arma::Col<T> startingPoint,
+			const double levyStepSize) noexcept{
+		return this->boundaryHandling(startingPoint + levyStepSize * (arma::randn<arma::Col<T>>(this->numberOfDimensions_) * (std::pow(std::tgamma(2.5) * std::sin(arma::datum::pi * 0.75) / (std::tgamma(1.25) * 1.5 * std::pow(2, 0.25)), 2/3)) / (arma::pow(arma::abs(arma::randn<arma::Col<T>>(this->numberOfDimensions_)), 2/3))));
+	}
 	
+	template <typename T>
+	unsigned int ModifiedCuckooSearch<T>::getRandomTopNest() noexcept{
+		return std::rand() % (int)(topNestPortion_ * this->numberOfDimensions_);
+	}
+	
+	template <typename T>
+	unsigned int ModifiedCuckooSearch<T>::getRandomNest() noexcept{
+		return std::rand() % this->numberOfDimensions_;
+	}
   template <typename T>
-  void ModifiedModifiedCuckooSearch<T>::setTopNestPortion(
+  void ModifiedCuckooSearch<T>::setTopNestPortion(
 			const double topNestPortion) noexcept {
     topNestPortion_ = topNestPortion;
   }
 	
 	template <typename T>
-  void ModifiedModifiedCuckooSearch<T>::setWorstNestPortion(
+  void ModifiedCuckooSearch<T>::setWorstNestPortion(
 			const double worstNestPortion) noexcept {
     worstNestPortion_ = worstNestPortion;
   }
 
   template <typename T>
-  void ModifiedModifiedCuckooSearch<T>::setMaxLevyStepSize(
-      const double MaxLevyStepSize) noexcept {
+  void ModifiedCuckooSearch<T>::setMaxLevyStepSize(
+      const double maxLevyStepSize) noexcept {
     maxLevyStepSize_ = maxLevyStepSize;
   }
 
   template <typename T>
-  std::string ModifiedModifiedCuckooSearch<T>::toString() const noexcept {
+  std::string ModifiedCuckooSearch<T>::toString() const noexcept {
     return "modified_cuckoo_search";
   }
 }
