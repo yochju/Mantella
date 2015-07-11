@@ -26,7 +26,8 @@ namespace mant {
 					const arma::Col<T> startingPoint,
 					const double levyStepSize) noexcept;
 
-			virtual unsigned int getRandomTopNest() noexcept;
+			virtual unsigned int getRandomTopNest(
+					const arma::Col<unsigned int> ranking) noexcept;
 			
 			virtual unsigned int getRandomNest() noexcept;
   };
@@ -60,7 +61,7 @@ namespace mant {
     while(!this->isFinished() && !this->isTerminated()) {
 			++this->numberOfIterations_;
 			arma::Col<unsigned int> ranking = arma::sort_index(objectiveValues);
-			if(this->numberOfIterations_ < 300)std::cout << objectiveValues << "\n" << ranking << std::endl;
+			//if(this->numberOfIterations_ < 300)std::cout << objectiveValues << "\n" << ranking << std::endl;
 			
 			for(std::size_t i = 0; i < this->populationSize_; ++i) {
 				if(ranking(i) > std::ceil((1 - worstNestPortion_) * this->populationSize_)) {
@@ -76,7 +77,8 @@ namespace mant {
 			for(std::size_t i = 0; i < this->populationSize_; ++i) {
 				if(ranking(i) < std::floor(topNestPortion_ * this->populationSize_)) {
 					++this->numberOfIterations_;
-					unsigned int randTopNest = getRandomTopNest();
+					unsigned int randTopNest = getRandomTopNest(ranking);
+					
 					if(randTopNest = i) {
 						double levyStepSize = maxLevyStepSize_ / std::pow(this->numberOfIterations_, 2);
 						
@@ -110,13 +112,18 @@ namespace mant {
 	template <typename T>
 	arma::Col<T> ModifiedCuckooSearch<T>::levyFlight(
 			const arma::Col<T> startingPoint,
-			const double levyStepSize) noexcept{
+			const double levyStepSize) noexcept {
 		return this->boundaryHandling(startingPoint + levyStepSize * (arma::randn<arma::Col<T>>(this->numberOfDimensions_) * (std::pow(std::tgamma(2.5) * std::sin(arma::datum::pi * 0.75) / (std::tgamma(1.25) * 1.5 * std::pow(2, 0.25)), 2/3)) / (arma::pow(arma::abs(arma::randn<arma::Col<T>>(this->numberOfDimensions_)), 2/3))));
 	}
 	
 	template <typename T>
-	unsigned int ModifiedCuckooSearch<T>::getRandomTopNest() noexcept{
-		return std::rand() % (int)(topNestPortion_ * this->numberOfDimensions_);
+	unsigned int ModifiedCuckooSearch<T>::getRandomTopNest(
+			const arma::Col<unsigned int> ranking) noexcept {
+		unsigned int pos = getRandomNest();
+		while(ranking(pos) >= std::floor(topNestPortion_ * this->populationSize_)) {
+			pos = getRandomNest();
+		}
+		return pos;
 	}
 	
 	template <typename T>
