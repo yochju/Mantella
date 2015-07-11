@@ -58,19 +58,24 @@ namespace mant {
       this->updateBestParameter(nests.col(n), this->getSoftConstraintsValue(nests.col(n)), objectiveValues(n));
     }
     
+		unsigned int generation = 0;
     while(!this->isFinished() && !this->isTerminated()) {
 			++this->numberOfIterations_;
+			++generation;
 			arma::Col<unsigned int> ranking = arma::sort_index(objectiveValues);
-			//if(this->numberOfIterations_ < 300)std::cout << objectiveValues << "\n" << ranking << std::endl;
 			
 			for(std::size_t i = 0; i < this->populationSize_; ++i) {
 				if(ranking(i) > std::ceil((1 - worstNestPortion_) * this->populationSize_)) {
 					++this->numberOfIterations_;
-					double levyStepSize = maxLevyStepSize_ / std::sqrt(this->numberOfIterations_);	
+					double levyStepSize = maxLevyStepSize_ / std::sqrt(generation);	
 				
 					nests.col(i) = levyFlight(nests.col(i), levyStepSize);
 					objectiveValues(i) = this->getObjectiveValue(nests.col(i));
 					this->updateBestParameter(nests.col(i), 0.0, objectiveValues(i));
+					
+					if(this->isFinished() || this->isTerminated()) {
+						break;
+					}
 				}
 			}
 			
@@ -80,7 +85,7 @@ namespace mant {
 					unsigned int randTopNest = getRandomTopNest(ranking);
 					
 					if(randTopNest = i) {
-						double levyStepSize = maxLevyStepSize_ / std::pow(this->numberOfIterations_, 2);
+						double levyStepSize = maxLevyStepSize_ / std::pow(generation, 2);
 						
 						const arma::Col<T>& cuckooCandidate = levyFlight(nests.col(i), levyStepSize);
 						const double objectiveValue = this->getObjectiveValue(cuckooCandidate);
@@ -94,16 +99,20 @@ namespace mant {
 					}
 					else {
 						//generating new Nest on the line between the two chosen Nests
-						const arma::Col<T>& cuckooCandidate = arma::abs(nests.col(i) - nests.col(randTopNest)) / goldenRatio;
+						unsigned int worseNest = ranking(i) > ranking(randTopNest) ? i : randTopNest;
+						const arma::Col<T>& cuckooCandidate = this->boundaryHandling(nests.col(worseNest) + arma::abs(nests.col(i) - nests.col(randTopNest)) / goldenRatio);
 						const double objectiveValue = this->getObjectiveValue(cuckooCandidate);
 						
 						unsigned int randNest = getRandomNest();
 						if(objectiveValue < objectiveValues(randNest)) {
 							nests.col(randNest) = cuckooCandidate;
 							objectiveValues(randNest) = objectiveValue;
-							this->updateBestParameter(cuckooCandidate, 0.0, objectiveValue);
+							bool test = this->updateBestParameter(cuckooCandidate, 0.0, objectiveValue);
 						}
-					}
+					}					
+				}
+				if(this->isFinished() || this->isTerminated()) {
+					break;
 				}
 			}
     }
@@ -113,6 +122,7 @@ namespace mant {
 	arma::Col<T> ModifiedCuckooSearch<T>::levyFlight(
 			const arma::Col<T> startingPoint,
 			const double levyStepSize) noexcept {
+		//calculates a new Nest from the starting point, using the levyStepSize and an equation for levy flights
 		return this->boundaryHandling(startingPoint + levyStepSize * (arma::randn<arma::Col<T>>(this->numberOfDimensions_) * (std::pow(std::tgamma(2.5) * std::sin(arma::datum::pi * 0.75) / (std::tgamma(1.25) * 1.5 * std::pow(2, 0.25)), 2/3)) / (arma::pow(arma::abs(arma::randn<arma::Col<T>>(this->numberOfDimensions_)), 2/3))));
 	}
 	
