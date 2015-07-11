@@ -59,44 +59,48 @@ namespace mant {
     
     while(!this->isFinished() && !this->isTerminated()) {
 			++this->numberOfIterations_;
-			arma::Col<unsigned int> indices = arma::sort_index(objectiveValues);
-			if(this->numberOfIterations_ < 300)std::cout << objectiveValues << "\n" << indices << std::endl;
+			arma::Col<unsigned int> ranking = arma::sort_index(objectiveValues);
+			if(this->numberOfIterations_ < 300)std::cout << objectiveValues << "\n" << ranking << std::endl;
 			
-			for(std::size_t i = std::ceil((1 - worstNestPortion_) * this->populationSize_); i < this->populationSize_; ++i) {
-				++this->numberOfIterations_;
-				double levyStepSize = maxLevyStepSize_ / std::sqrt(this->numberOfIterations_);	
+			for(std::size_t i = 0; i < this->populationSize_; ++i) {
+				if(ranking(i) > std::ceil((1 - worstNestPortion_) * this->populationSize_)) {
+					++this->numberOfIterations_;
+					double levyStepSize = maxLevyStepSize_ / std::sqrt(this->numberOfIterations_);	
 				
-				nests.col(indices(i)) = levyFlight(nests.col(indices(i)), levyStepSize);
-				objectiveValues(indices(i)) = this->getObjectiveValue(nests.col(indices(i)));
-				this->updateBestParameter(nests.col(indices(i)), 0.0, objectiveValues(indices(i)));
+					nests.col(i) = levyFlight(nests.col(i), levyStepSize);
+					objectiveValues(i) = this->getObjectiveValue(nests.col(i));
+					this->updateBestParameter(nests.col(i), 0.0, objectiveValues(i));
+				}
 			}
 			
-			for(std::size_t i = 0; i < std::floor(topNestPortion_ * this->populationSize_); ++i) {
-				++this->numberOfIterations_;
-				unsigned int randTopNest = getRandomTopNest();
-				if(randTopNest = indices(i)) {
-					double levyStepSize = maxLevyStepSize_ / std::pow(this->numberOfIterations_, 2);
-					
-					const arma::Col<T>& cuckooCandidate = levyFlight(nests.col(indices(i)), levyStepSize);
-					const double objectiveValue = this->getObjectiveValue(cuckooCandidate);
-					
-					unsigned int randNest = getRandomNest();
-					if(objectiveValue < objectiveValues(randNest)) {
-						nests.col(randNest) = cuckooCandidate;
-						objectiveValues(randNest) = objectiveValue;
-						this->updateBestParameter(cuckooCandidate, 0.0, objectiveValue);
+			for(std::size_t i = 0; i < this->populationSize_; ++i) {
+				if(ranking(i) < std::floor(topNestPortion_ * this->populationSize_)) {
+					++this->numberOfIterations_;
+					unsigned int randTopNest = getRandomTopNest();
+					if(randTopNest = i) {
+						double levyStepSize = maxLevyStepSize_ / std::pow(this->numberOfIterations_, 2);
+						
+						const arma::Col<T>& cuckooCandidate = levyFlight(nests.col(i), levyStepSize);
+						const double objectiveValue = this->getObjectiveValue(cuckooCandidate);
+						
+						unsigned int randNest = getRandomNest();
+						if(objectiveValue < objectiveValues(randNest)) {
+							nests.col(randNest) = cuckooCandidate;
+							objectiveValues(randNest) = objectiveValue;
+							this->updateBestParameter(cuckooCandidate, 0.0, objectiveValue);
+						}
 					}
-				}
-				else {
-					//generating new Nest on the line between the two chosen Nests
-					const arma::Col<T>& cuckooCandidate = arma::abs(nests.col(indices(i)) - nests.col(randTopNest)) / goldenRatio;
-					const double objectiveValue = this->getObjectiveValue(cuckooCandidate);
-					
-					unsigned int randNest = getRandomNest();
-					if(objectiveValue < objectiveValues(randNest)) {
-						nests.col(randNest) = cuckooCandidate;
-						objectiveValues(randNest) = objectiveValue;
-						this->updateBestParameter(cuckooCandidate, 0.0, objectiveValue);
+					else {
+						//generating new Nest on the line between the two chosen Nests
+						const arma::Col<T>& cuckooCandidate = arma::abs(nests.col(i) - nests.col(randTopNest)) / goldenRatio;
+						const double objectiveValue = this->getObjectiveValue(cuckooCandidate);
+						
+						unsigned int randNest = getRandomNest();
+						if(objectiveValue < objectiveValues(randNest)) {
+							nests.col(randNest) = cuckooCandidate;
+							objectiveValues(randNest) = objectiveValue;
+							this->updateBestParameter(cuckooCandidate, 0.0, objectiveValue);
+						}
 					}
 				}
 			}
