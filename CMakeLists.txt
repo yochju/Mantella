@@ -201,6 +201,7 @@ add_library(mantella SHARED
   src/helper/setTheory.cpp
   src/helper/statistic.cpp
   src/helper/unorderedContainer.cpp
+  src/helper/rankingSupportVectorMachine.cpp
 
   # Distance functions
   src/distanceFunction.cpp
