@@ -11,15 +11,13 @@
 
 namespace mant {
   namespace itd {
+    
     class GTOC1 : public OrbitalProblem {
      public:
-      using OrbitalProblem::OrbitalProblem;
+      using OrbitalProblem::OrbitalProblem;    
+      GTOC1(std::vector<arma::Col<double>::fixed<6>> orbitalTargetSequence);
       
-      GTOC1::GTOC1(std::vector<arma::Col<double>::fixed<6>> orbitalTargetSequence){
-        orbitalTargetSequence_ = orbitalTargetSequence;
-      }
-      
-      arma::Col<double> problemFunction();
+      arma::Col<double> problemFunction(arma::Col<double> parameter);
       
       private:
         double rocketMass_ = 1500.0; // Satellite initial mass [Kg]
