@@ -50,6 +50,8 @@
 
 // Orbital Mechanics
 #include <mantella_bits/orbitalMechanics.hpp>
+#include <mantella_bits/orbitalProblem.hpp>
+#include <mantella_bits/orbitalProblem/gtoc1.hpp>
 
 // Machine learning functions
 #include <mantella_bits/samplesAnalysis.hpp>

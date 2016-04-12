@@ -233,6 +233,8 @@ add_library(mantella ${LIBRARY_TYPE}
   
   # Orbital Mechanics
   src/orbitalMechanics.cpp
+  src/orbitalProblem.cpp
+  src/orbitalProblem/gtoc1.cpp
   
   # Machine learning functions
   src/samplesAnalysis.cpp
