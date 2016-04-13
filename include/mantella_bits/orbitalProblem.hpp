@@ -5,12 +5,9 @@
 
 namespace mant {
   namespace itd {
-
     class OrbitalProblem {
      protected:
-      explicit OrbitalProblem();
-
-      virtual arma::Col<double> problemFunction(arma::Col<double> parameter) = 0;
+      virtual arma::Col<double> problemFunction(const arma::Col<double>& parameter) = 0;
     };
   }
 }

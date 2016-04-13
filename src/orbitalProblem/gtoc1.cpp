@@ -7,15 +7,15 @@
 namespace mant {
   namespace itd {
 
-    GTOC1::GTOC1(std::vector<arma::Col<double>::fixed<6>> orbitalTargetSequence) {
+    GTOC1::GTOC1(const std::vector<arma::Mat<double>::fixed<2, 6>>& orbitalTargetSequence) {
       verify(orbitalTargetSequence.size() >= 2, "gtoc1: Sequence must have at least size of two.");
       orbitalTargetSequence_ = orbitalTargetSequence;
     }
 
-    arma::Col<double> GTOC1::problemFunction(arma::Col<double> parameter) {
+    arma::Col<double> GTOC1::problemFunction(const arma::Col<double>& parameter) {
       double totalTimePassed = 0.0;
 
-      verify(parameter.n_cols == orbitalTargetSequence_.size(), "gtoc1.problemFunction: Number of parameter and sequence length must be equal.");
+      verify(parameter.n_elem == orbitalTargetSequence_.size(), "gtoc1.problemFunction: Number of parameter and sequence length must be equal.");
 
       std::vector<std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>>> orbitBodyPositionsAndVelocities;
 

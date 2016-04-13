@@ -237,7 +237,7 @@ namespace mant {
         }
       }
 
-      return std::make_pair(positionVector, velocityVector);
+      return {positionVector, velocityVector};
       //par2ic end
     }
   }
