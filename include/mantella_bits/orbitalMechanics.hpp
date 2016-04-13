@@ -9,7 +9,6 @@
 namespace mant {
   namespace itd {
 
-    const double refModifiedJulianDay2000 = 0.5;
     const double standardGravitationalParameterOfSun = 1.32712440018e20;
 
     std::pair<double, double> gravityAssist(

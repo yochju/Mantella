@@ -54,7 +54,7 @@ namespace mant {
           }
         }
 
-        deltaVelocities += arma::norm(bestVelocities.first - bestVelocities.second);
+        //deltaVelocities += arma::norm(bestVelocities.first - bestVelocities.second);
 
         std::pair<double, double> dvAndRp = gravityAssist(pastBestVelocities.second, bestVelocities.first);
         deltaVelocities += dvAndRp.first;

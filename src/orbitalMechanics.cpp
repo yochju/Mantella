@@ -180,7 +180,7 @@ namespace mant {
 
       arma::Row<double>::fixed<6> keplerValuesPreCalculationVector = keplerianElements.row(0) + keplerianElements.row(1) * nomalisedMjd2000;
 
-      double semiMajorAxis = keplerValuesPreCalculationVector(0) * 149597870691.0;
+      double semiMajorAxis = keplerValuesPreCalculationVector(0) * 149597870691.0; // in m
       double eccentricity = keplerValuesPreCalculationVector(1);
       double inclination = (arma::datum::pi / 180.0) * keplerValuesPreCalculationVector(2);
       double omg = (arma::datum::pi / 180.0) * keplerValuesPreCalculationVector(5);
