@@ -100,7 +100,7 @@ namespace mant {
       velocityPairs.reserve(maximalNumberOfRevolutions * 4 + 2);
       std::cout << "post decl" << std::endl;
       double lowerBound = -2.0 * arma::datum::pi;
-      double upperBound = 3.0 * std::pow(arma::datum::pi, 2.0);
+      double upperBound = 3.5 * std::pow(arma::datum::pi, 2.0);
 
       // For zero revolutions
       std::cout << "0" << std::endl;

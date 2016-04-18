@@ -19,7 +19,7 @@ namespace mant {
 
       std::vector<std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>>> orbitBodyPositionsAndVelocities;
 
-      for (int i = 0; i < parameter.n_cols; i++) {
+      for (int i = 0; i < parameter.n_elem; i++) {
         totalTimePassed += parameter(i);
         orbitBodyPositionsAndVelocities.push_back(orbitOnPosition(totalTimePassed, orbitalTargetSequence_.at(i)));
       }
@@ -41,7 +41,7 @@ namespace mant {
 
       std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>> pastBestVelocities;
 
-      for (int i = 2; i < parameter.n_cols; i++) {
+      for (int i = 2; i < parameter.n_elem; i++) {
         pastBestVelocities = bestVelocities;
 
         lambertVelocities = lambert(orbitBodyPositionsAndVelocities.at(i - 1).first, orbitBodyPositionsAndVelocities.at(i).first, parameter(i));
