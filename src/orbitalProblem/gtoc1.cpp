@@ -80,7 +80,7 @@ namespace mant {
         DVtot += (DV[0] - rocketDVlaunch_);
       }
       */
-      //std::cout << "stuff: " << rocketSpecificImpulse_ * 0.00980665 << " " << -deltaVelocities / (rocketSpecificImpulse_ * 0.00980665) << " " << std::exp(-deltaVelocities / (rocketSpecificImpulse_ * 0.00980665)) << std::endl;
+      std::cout << "stuff: " << rocketSpecificImpulse_ * 0.00980665 << " " << -deltaVelocities / (rocketSpecificImpulse_ * 0.00980665) << " " << std::exp(-deltaVelocities / (rocketSpecificImpulse_ * 0.00980665)) << std::endl;
       double finalMass = rocketMass_ * std::exp((-deltaVelocities * 1000.0) / (rocketSpecificImpulse_ * 0.00980665));
       //std::cout << "finalMass: " << finalMass << std::endl;
       arma::Col<double>::fixed<3> relativeVelocityToLastTarget = orbitBodyPositionsAndVelocities.back().second - bestVelocities.second;

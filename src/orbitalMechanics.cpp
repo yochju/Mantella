@@ -56,13 +56,13 @@ namespace mant {
 
       auto timeOfFlightFunction = [&A, &B, &t_m, &departureDistanceFromSun, &arrivalDistanceFromSun, &transferTime, &numberOfRevolutions](
           const double parameter) {
-        if((numberOfRevolutions == 0 && (std::abs(parameter + 4.0 * arma::datum::pi) < 1e-5 || std::abs(parameter - 4.0 * std::pow(arma::datum::pi, 2.0)) < 1e-5)) 
+        if((numberOfRevolutions == 0 && (std::abs(parameter + 4.0 * arma::datum::pi) < 1e-5 || std::abs(parameter - 4.0 * std::pow(arma::datum::pi, 2.0)) < 1e-5))
         || (numberOfRevolutions > 0 && (std::abs(parameter - 4.0 * std::pow(numberOfRevolutions * arma::datum::pi, 2.0)) < 1e-5 || std::abs(parameter - 4.0 * std::pow((numberOfRevolutions + 1.0) * arma::datum::pi, 2.0)) < 1e-5))) { 
           return arma::datum::inf;
         }
           
         A = t_m * A;
-        std::cout << "A: " << A << "  -  ";
+        //std::cout << "A: " << A << "  -  ";
                 
         // Calculates the values for the second and third Stumpff function c2 and c3.
         double c2;
@@ -78,18 +78,18 @@ namespace mant {
           c3 = 1.0/6.0;
         }
         
-        std::cout << "c2: " << c2 << "  -  ";
-        std::cout << "c3: " << c3 << "  -  ";
+        //std::cout << "c2: " << c2 << "  -  ";
+        //std::cout << "c3: " << c3 << "  -  ";
         
         B = departureDistanceFromSun + arrivalDistanceFromSun + 1.0 / std::sqrt(c2) * (A * (parameter * c3 - 1.0));
         
-        std::cout << "B: " << B << "  -  ";
-        std::cout << "val: " << 1.0 / std::sqrt(standardGravitationalParameterOfSun) * (std::pow(std::sqrt(B / c2), 3.0) * c3 + A * std::sqrt(B)) / 86400.0 - transferTime << std::endl;
+        //std::cout << "B: " << B << "  -  ";
+        //std::cout << "val: " << 1.0 / std::sqrt(standardGravitationalParameterOfSun) * (std::pow(std::sqrt(B / c2), 3.0) * c3 + A * std::sqrt(B)) / 86400.0 - transferTime << std::endl;
                  
         return (1.0 / std::sqrt(standardGravitationalParameterOfSun)) * (std::pow(std::sqrt(B / c2), 3.0) * c3 + A * std::sqrt(B)) / 86400.0 - transferTime;
       };
 
-      std::cout << "function: " << timeOfFlightFunction(3.0 * std::pow(arma::datum::pi, 2.0)) << std::endl;
+      //std::cout << "function: " << timeOfFlightFunction(3.0 * std::pow(arma::datum::pi, 2.0)) << std::endl;
 
       auto calculateVelocityVectorsFunction = [&A, &B, &departurePosition, &departureDistanceFromSun, &arrivalPosition, &arrivalDistanceFromSun]() -> std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>> {
         std::cout << "begin calculateVelocityVectorsFunction" << std::endl;
@@ -188,7 +188,7 @@ namespace mant {
 
       double timePassedSincePeriapsis = (modifiedJulianDay - keplerianElements(6)) * 86400.0; // in sec
 
-      double semiMajorAxis = keplerianElements(0) * 149597870691.0; //in km
+      double semiMajorAxis = keplerianElements(0) * 149597870691.0; //in m
       double eccentricity = keplerianElements(1);
       double inclination = (arma::datum::pi / 180.0) * keplerianElements(2);
       double omg = (arma::datum::pi / 180.0) * keplerianElements(3);
