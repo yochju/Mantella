@@ -172,46 +172,44 @@ namespace mant {
     }
 
     std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>> orbitOnPosition(
-        const double modifiedJulianDay2000,
-        const arma::Mat<double>::fixed<2, 6>& keplerianElements) {
-      verify(modifiedJulianDay2000 > -73048.0 && modifiedJulianDay2000 < 18263.0, "orbitOnPosition: The modifiedJulianDay2000 must be between -73048.0 and 18263.0.");
+        const double modifiedJulianDay,
+        const arma::Col<double>::fixed<7>& keplerianElements) {
+      if (!std::isfinite(modifiedJulianDay)) {
+        // TODO
+        verify(std::isfinite(modifiedJulianDay), "orbitOnPosition: The modifiedJulianDay must be finite.");
+      }
 
-      double nomalisedMjd2000 = (modifiedJulianDay2000 - 0.5) / 36525.0;
+      double timePassedSincePeriapsis = (modifiedJulianDay - keplerianElements(6)) * 86400.0; // in sec
 
-      arma::Row<double>::fixed<6> keplerValuesPreCalculationVector = keplerianElements.row(0) + keplerianElements.row(1) * nomalisedMjd2000;
+      double semiMajorAxis = keplerianElements(0) * 149597870691.0; //in km
+      double eccentricity = keplerianElements(1);
+      double inclination = (arma::datum::pi / 180.0) * keplerianElements(2);
+      double omg = (arma::datum::pi / 180.0) * keplerianElements(3);
+      double omp = (arma::datum::pi / 180.0) * keplerianElements(4);
+      double ea = (arma::datum::pi / 180.0) * keplerianElements(5);
 
-      double semiMajorAxis = keplerValuesPreCalculationVector(0) * 149597870691.0; // in m
-      double eccentricity = keplerValuesPreCalculationVector(1);
-      double inclination = (arma::datum::pi / 180.0) * keplerValuesPreCalculationVector(2);
-      double omg = (arma::datum::pi / 180.0) * keplerValuesPreCalculationVector(5);
-      double omp = (arma::datum::pi / 180.0) * (keplerValuesPreCalculationVector(4) - keplerValuesPreCalculationVector(5));
-      double ea = (arma::datum::pi / 180.0) * (keplerValuesPreCalculationVector(3) - keplerValuesPreCalculationVector(4));
-
-      verify(eccentricity < 1.0, "orbitOnPosition: The eccentricity must be lesser than 1.0.");
+      if (eccentricity >= 1.0) {
+        // TODO
+        verify(eccentricity < 1.0, "orbitOnPosition: The eccentricity must be lesser than 1.0.");
+      }
+      double meanMotion = std::sqrt(standardGravitationalParameterOfSun / std::pow(semiMajorAxis, 3.0));
+      ea += timePassedSincePeriapsis * meanMotion;
 
       //m2e begin
-      double E = ea + eccentricity * std::cos(ea);
       ea = mant::brent([&ea, &eccentricity](
                            double parameter) { 
         return parameter - eccentricity * std::sin(parameter) - ea;
       },
-          E - 1.0, E + 1.0, 100, 1e-10); //TODO bounds round about variable E, +- 1.0 okay? Variable E nesecary?
+          ea + eccentricity * std::cos(ea) - 1.0, ea + eccentricity * std::cos(ea) + 1.0, 100, 1e-10); //TODO bounds round about (ea + eccentricity * std::cos(ea)) +- 1.0 okay?
       //m2e end
 
       //par2ic begin
-      double b;
-      double n;
-      double xper;
-      double yper;
-      double xdotper;
-      double ydotper;
-
-      b = semiMajorAxis * std::sqrt(1.0 - std::pow(eccentricity, 2.0));
-      n = std::sqrt(standardGravitationalParameterOfSun / std::pow(semiMajorAxis, 3.0));
-      xper = semiMajorAxis * (std::cos(ea) - eccentricity);
-      yper = b * std::sin(ea);
-      xdotper = -(semiMajorAxis * n * std::sin(ea)) / (1.0 - eccentricity * std::cos(ea));
-      ydotper = (b * n * std::cos(ea)) / (1.0 - eccentricity * std::cos(ea));
+      double b = semiMajorAxis * std::sqrt(1.0 - std::pow(eccentricity, 2.0));
+      double n = std::sqrt(standardGravitationalParameterOfSun / std::pow(semiMajorAxis, 3.0));
+      double xper = semiMajorAxis * (std::cos(ea) - eccentricity);
+      double yper = b * std::sin(ea);
+      double xdotper = -(semiMajorAxis * n * std::sin(ea)) / (1.0 - eccentricity * std::cos(ea));
+      double ydotper = (b * n * std::cos(ea)) / (1.0 - eccentricity * std::cos(ea));
 
       double cosomg = std::cos(omg);
       double cosomp = std::cos(omp);
@@ -227,17 +225,10 @@ namespace mant {
       arma::Col<double>::fixed<3> temp = {xper, yper, 0.0};
       arma::Col<double>::fixed<3> temp2 = {xdotper, ydotper, 0.0};
 
-      arma::Col<double>::fixed<3> positionVector = {0.0, 0.0, 0.0};
-      arma::Col<double>::fixed<3> velocityVector = {0.0, 0.0, 0.0};
+      arma::Col<double>::fixed<3> positionVector = rotationMatrix * temp;
+      arma::Col<double>::fixed<3> velocityVector = rotationMatrix * temp2;
 
-      for (arma::uword j = 0; j < 3; ++j) {
-        for (arma::uword k = 0; k < 3; ++k) {
-          positionVector(j) += rotationMatrix(j, k) * temp(k);
-          velocityVector(j) += rotationMatrix(j, k) * temp2(k);
-        }
-      }
-
-      return {positionVector, velocityVector};
+      return std::make_pair(positionVector, velocityVector);
       //par2ic end
     }
   }
