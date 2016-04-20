@@ -56,8 +56,8 @@ namespace mant {
 
       auto timeOfFlightFunction = [&A, &B, &t_m, &departureDistanceFromSun, &arrivalDistanceFromSun, &transferTime, &numberOfRevolutions](
           const double parameter) {
-        if((numberOfRevolutions == 0 && (std::abs(parameter + 4.0 * arma::datum::pi) < 1e-5 || std::abs(parameter + 4.0 * std::pow(arma::datum::pi, 2.0)) < 1e-5)) 
-        || (numberOfRevolutions > 0 && (std::abs(parameter + 4.0 * std::pow((numberOfRevolutions) * arma::datum::pi, 2.0)) < 1e-5 || std::abs(parameter + 4.0 * std::pow((numberOfRevolutions + 1) * arma::datum::pi, 2.0)) < 1e-5))) { 
+        if((numberOfRevolutions == 0 && (std::abs(parameter + 4.0 * arma::datum::pi) < 1e-5 || std::abs(parameter - 4.0 * std::pow(arma::datum::pi, 2.0)) < 1e-5)) 
+        || (numberOfRevolutions > 0 && (std::abs(parameter - 4.0 * std::pow(numberOfRevolutions * arma::datum::pi, 2.0)) < 1e-5 || std::abs(parameter - 4.0 * std::pow((numberOfRevolutions + 1.0) * arma::datum::pi, 2.0)) < 1e-5))) { 
           return arma::datum::inf;
         }
           
@@ -91,7 +91,7 @@ namespace mant {
 
       std::cout << "function: " << timeOfFlightFunction(3.0 * std::pow(arma::datum::pi, 2.0)) << std::endl;
 
-      auto calculateVelocityVectorsFunction = [&A, &B, &departurePosition, &departureDistanceFromSun, &arrivalPosition, &arrivalDistanceFromSun ]() -> std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>> {
+      auto calculateVelocityVectorsFunction = [&A, &B, &departurePosition, &departureDistanceFromSun, &arrivalPosition, &arrivalDistanceFromSun]() -> std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>> {
         std::cout << "begin calculateVelocityVectorsFunction" << std::endl;
         double F = 1.0 - B / departureDistanceFromSun;
         double G = A * std::sqrt(B / standardGravitationalParameterOfSun);
@@ -122,6 +122,7 @@ namespace mant {
 
       mant::OptimisationProblem timeOfFlightMinimumProblem(1);
       timeOfFlightMinimumProblem.setObjectiveFunction([&timeOfFlightFunction](const arma::Col<double>& parameter) {
+        std::cout << "in setObjectiveFunction" << std::endl;
         return timeOfFlightFunction(parameter(0));
       });
 
@@ -133,9 +134,11 @@ namespace mant {
         upperBound = 4.0 * std::pow((numberOfRevolutions + 1) * arma::datum::pi, 2.0);
         std::cout << "(lower, upper) = (" << lowerBound << ", " << upperBound << ")" << std::endl;
         timeOfFlightMinimumProblem.setLowerBounds({lowerBound});
+        std::cout << "between bounds" << std::endl;
         timeOfFlightMinimumProblem.setUpperBounds({upperBound});
-
+        std::cout << "post bounds" << std::endl;
         timeOfFlightMinimumAlgorithm.optimise(timeOfFlightMinimumProblem, {(upperBound - lowerBound) / 2.0});
+        std::cout << "after optimise" << std::endl;
         arma::Col<double> timeOfFlightMinimum = timeOfFlightMinimumAlgorithm.getBestParameter();
         std::cout << "2 - " << numberOfRevolutions << std::endl;
         double brentShortWaySolutionLeft = mant::brent(timeOfFlightFunction, lowerBound, timeOfFlightMinimum(0), 100, 1e-10);
