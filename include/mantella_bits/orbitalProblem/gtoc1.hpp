@@ -12,7 +12,7 @@ namespace mant {
     class GTOC1 : public OrbitalProblem {
      public:
       GTOC1(
-          const std::vector<arma::Mat<double>::fixed<2, 6>>& orbitalTargetSequence);
+          const std::vector<arma::Col<double>::fixed<7>>& orbitalTargetSequence);
 
       arma::Col<double> problemFunction(
           const arma::Col<double>& parameter);
@@ -24,7 +24,7 @@ namespace mant {
 
       //arma::Col<double>::fixed<6> asteroidKeplerValues_ = {2.5897261, 0.2734625, 6.40734, 128.34711, 264.78691, 320.479555};
 
-      std::vector<arma::Mat<double>::fixed<2, 6>> orbitalTargetSequence_;
+      std::vector<arma::Col<double>::fixed<7>> orbitalTargetSequence_;
     };
   }
 }

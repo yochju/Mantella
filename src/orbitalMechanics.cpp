@@ -48,15 +48,19 @@ namespace mant {
       double depatureArrivalDotProduct = arma::dot(departurePosition, arrivalPosition);
 
       arma::uword maximalNumberOfRevolutions = 0;
-      arma::uword numberOfRevolutions;
+      arma::uword numberOfRevolutions = 0;
 
       double t_m = 1.0;
       double A = t_m * std::sqrt(departureDistanceFromSun * arrivalDistanceFromSun * (1.0 + depatureArrivalDotProduct / (departureDistanceFromSun * arrivalDistanceFromSun)));
       double B = 0.0;
 
-      auto timeOfFlightFunction = [&A, &B, &t_m, &departureDistanceFromSun, &arrivalDistanceFromSun, &transferTime](
+      auto timeOfFlightFunction = [&A, &B, &t_m, &departureDistanceFromSun, &arrivalDistanceFromSun, &transferTime, &numberOfRevolutions](
           const double parameter) {
-                
+        if((numberOfRevolutions == 0 && (std::abs(parameter + 4.0 * arma::datum::pi) < 1e-5 || std::abs(parameter + 4.0 * std::pow(arma::datum::pi, 2.0)) < 1e-5)) 
+        || (numberOfRevolutions > 0 && (std::abs(parameter + 4.0 * std::pow((numberOfRevolutions) * arma::datum::pi, 2.0)) < 1e-5 || std::abs(parameter + 4.0 * std::pow((numberOfRevolutions + 1) * arma::datum::pi, 2.0)) < 1e-5))) { 
+          return arma::datum::inf;
+        }
+          
         A = t_m * A;
         std::cout << "A: " << A << "  -  ";
                 
@@ -99,8 +103,8 @@ namespace mant {
       std::vector<std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>>> velocityPairs;
       velocityPairs.reserve(maximalNumberOfRevolutions * 4 + 2);
       std::cout << "post decl" << std::endl;
-      double lowerBound = -2.0 * arma::datum::pi;
-      double upperBound = 3.5 * std::pow(arma::datum::pi, 2.0);
+      double lowerBound = -4.0 * arma::datum::pi;
+      double upperBound = 4.0 * std::pow(arma::datum::pi, 2.0);
 
       // For zero revolutions
       std::cout << "0" << std::endl;
@@ -125,8 +129,8 @@ namespace mant {
       timeOfFlightMinimumAlgorithm.setMaximalNumberOfIterations(100);
 
       for (numberOfRevolutions = 1; numberOfRevolutions <= maximalNumberOfRevolutions; numberOfRevolutions++) {
-        lowerBound = 6.0 * std::pow((numberOfRevolutions)*arma::datum::pi, 2.0);
-        upperBound = 2.0 * std::pow((numberOfRevolutions + 1) * arma::datum::pi, 2.0);
+        lowerBound = 4.0 * std::pow((numberOfRevolutions)*arma::datum::pi, 2.0);
+        upperBound = 4.0 * std::pow((numberOfRevolutions + 1) * arma::datum::pi, 2.0);
         std::cout << "(lower, upper) = (" << lowerBound << ", " << upperBound << ")" << std::endl;
         timeOfFlightMinimumProblem.setLowerBounds({lowerBound});
         timeOfFlightMinimumProblem.setUpperBounds({upperBound});

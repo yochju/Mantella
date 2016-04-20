@@ -7,7 +7,7 @@
 namespace mant {
   namespace itd {
 
-    GTOC1::GTOC1(const std::vector<arma::Mat<double>::fixed<2, 6>>& orbitalTargetSequence) {
+    GTOC1::GTOC1(const std::vector<arma::Col<double>::fixed<7>>& orbitalTargetSequence) {
       verify(orbitalTargetSequence.size() >= 2, "gtoc1: Sequence must have at least size of two.");
       orbitalTargetSequence_ = orbitalTargetSequence;
     }
