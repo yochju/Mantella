@@ -46,7 +46,7 @@ namespace mant {
       double deltaVelocities = 0;
 
       std::vector<std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>>> lambertVelocities = lambert(orbitBodyPositionsAndVelocities.at(0).first, orbitBodyPositionsAndVelocities.at(1).first, parameter(1) * 86400.0);
-
+      
       std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>> bestVelocities;
       double currentDV = std::numeric_limits<double>::max();
 
@@ -55,6 +55,9 @@ namespace mant {
           bestVelocities = pair;
         }
       }
+      
+      std::cout << "lambert solution: (" << bestVelocities.first(0) << ", " << bestVelocities.first(1) << ", " << bestVelocities.first(2) << ") ~ " << "(" << bestVelocities.second(0) << ", " << bestVelocities.second(1) << ", " << bestVelocities.second(2) << ") " << std::endl; 
+      
       // Launcher Constraint
       if(arma::norm(bestVelocities.first - orbitBodyPositionsAndVelocities.at(0).first) > rocketDVlaunch_){
         deltaVelocities += arma::norm(bestVelocities.first) - arma::norm(bestVelocities.second) - rocketDVlaunch_;
@@ -74,10 +77,12 @@ namespace mant {
             bestVelocities = pair;
           }
         }
+        
+        std::cout << "lambert solution: (" << bestVelocities.first(0) << ", " << bestVelocities.first(1) << ", " << bestVelocities.first(2) << ") ~ " << "(" << bestVelocities.second(0) << ", " << bestVelocities.second(1) << ", " << bestVelocities.second(2) << ") " << std::endl; 
 
         //deltaVelocities += arma::norm(bestVelocities.first - bestVelocities.second);
 
-        std::pair<double, double> dvAndRp = gravityAssist(pastBestVelocities.second, bestVelocities.first);
+        std::pair<double, double> dvAndRp = gravityAssist(pastBestVelocities.second - orbitBodyPositionsAndVelocities.at(i - 1).second, bestVelocities.first - orbitBodyPositionsAndVelocities.at(i - 1).second);
         deltaVelocities += dvAndRp.first;
         
         printf("Vin, Vout, DV, rp - %f, %f, %f, %f\n", arma::norm(pastBestVelocities.second), arma::norm(bestVelocities.first), dvAndRp.first, dvAndRp.second);

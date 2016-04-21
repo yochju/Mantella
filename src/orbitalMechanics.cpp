@@ -86,7 +86,7 @@ namespace mant {
         //std::cout << "B: " << B << "  -  ";
         //std::cout << "val: " << 1.0 / std::sqrt(standardGravitationalParameterOfSun) * (std::pow(std::sqrt(B / c2), 3.0) * c3 + A * std::sqrt(B)) / 86400.0 - transferTime << std::endl;
                  
-        return (1.0 / std::sqrt(standardGravitationalParameterOfSun)) * (std::pow(std::sqrt(B / c2), 3.0) * c3 + A * std::sqrt(B)) / 86400.0 - transferTime;
+        return (1.0 / std::sqrt(standardGravitationalParameterOfSun)) * (std::pow(std::sqrt(B / c2), 3.0) * c3 + A * std::sqrt(B)) - transferTime;
       };
 
       //std::cout << "function: " << timeOfFlightFunction(3.0 * std::pow(arma::datum::pi, 2.0)) << std::endl;
