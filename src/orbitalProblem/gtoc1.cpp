@@ -14,6 +14,12 @@ namespace mant {
 
     arma::Col<double> GTOC1::problemFunction(const arma::Col<double>& parameter) {
       double totalTimePassed = 0.0;
+      
+      std::cout << "t as input: ";
+      for(double el : parameter){
+        std::cout << el << " ";
+      }
+      std::cout << std::endl;
 
       verify(parameter.n_elem == orbitalTargetSequence_.size(), "gtoc1.problemFunction: Number of parameter and sequence length must be equal.");
 
@@ -23,6 +29,19 @@ namespace mant {
         totalTimePassed += parameter(i);
         orbitBodyPositionsAndVelocities.push_back(orbitOnPosition(totalTimePassed, orbitalTargetSequence_.at(i)));
       }
+      std::cout << "All positions: ";
+      for(auto pair : orbitBodyPositionsAndVelocities){  
+        arma::Col<double>::fixed<3> elem = pair.first;
+        std::cout << "(" << elem(0) << ", " << elem(1) << ", " << elem(2) << ") ";
+      }
+      std::cout << std::endl;
+    
+      std::cout << "All velocities: ";
+      for(auto pair : orbitBodyPositionsAndVelocities){  
+        arma::Col<double>::fixed<3> elem = pair.second;
+        std::cout << "(" << elem(0) << ", " << elem(1) << ", " << elem(2) << ") ";
+      }
+      std::cout << std::endl;
 
       double deltaVelocities = 0;
 
@@ -36,7 +55,7 @@ namespace mant {
           bestVelocities = pair;
         }
       }
-
+      // Launcher Constraint TODO
       deltaVelocities += arma::norm(bestVelocities.first - bestVelocities.second) - rocketDVlaunch_;
 
       std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>> pastBestVelocities;
@@ -49,7 +68,7 @@ namespace mant {
         currentDV = std::numeric_limits<double>::max();
 
         for (auto pair : lambertVelocities) {
-          if (currentDV > arma::norm(pair.first - pair.second)) {
+          if (currentDV > arma::norm(pair.first) - arma::norm(pair.second)) {
             bestVelocities = pair;
           }
         }
@@ -58,6 +77,8 @@ namespace mant {
 
         std::pair<double, double> dvAndRp = gravityAssist(pastBestVelocities.second, bestVelocities.first);
         deltaVelocities += dvAndRp.first;
+        
+        printf("Vin, Vout, DV, rp - %f, %f, %f, %f\n", arma::norm(pastBestVelocities.second / 1000.0), arma::norm(bestVelocities.first / 1000.0), dvAndRp.first, dvAndRp.second);
 
         /* ????????
         	for (i_count = 0; i_count < 3; i_count++)
@@ -68,7 +89,7 @@ namespace mant {
       }
 
       // penalties
-      /* ???????????
+      /* ??????????? TODO
         for (i_count = 0;i_count < n-2; i_count++)
           if (rp[i_count] < penalty[sequence[i_count+1]])
             DVtot += penalty_coeffs[sequence[i_count+1]]*fabs(rp[i_count] - penalty[sequence[i_count+1]]);

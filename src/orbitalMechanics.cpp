@@ -41,7 +41,7 @@ namespace mant {
         const double transferTime) {
       verify(transferTime > 0.0, "lambert: The transfer time must be greater than zero.");
 
-      std::cout << "START LAMBERT" << std::endl;
+      //std::cout << "START LAMBERT" << std::endl;
 
       double departureDistanceFromSun = arma::norm(departurePosition);
       double arrivalDistanceFromSun = arma::norm(arrivalPosition);
@@ -92,37 +92,37 @@ namespace mant {
       //std::cout << "function: " << timeOfFlightFunction(3.0 * std::pow(arma::datum::pi, 2.0)) << std::endl;
 
       auto calculateVelocityVectorsFunction = [&A, &B, &departurePosition, &departureDistanceFromSun, &arrivalPosition, &arrivalDistanceFromSun]() -> std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>> {
-        std::cout << "begin calculateVelocityVectorsFunction" << std::endl;
+        //std::cout << "begin calculateVelocityVectorsFunction" << std::endl;
         double F = 1.0 - B / departureDistanceFromSun;
         double G = A * std::sqrt(B / standardGravitationalParameterOfSun);
         double Gdot = 1.0 - B / arrivalDistanceFromSun;
-        std::cout << "end calculateVelocityVectorsFunction" << std::endl;
+        //std::cout << "end calculateVelocityVectorsFunction" << std::endl;
         return {(1.0 / G) * (arrivalPosition - departurePosition * F), (1.0 / G) * (Gdot * arrivalPosition - departurePosition)};
       };
-      std::cout << "pre decl" << std::endl;
+      //std::cout << "pre decl" << std::endl;
       std::vector<std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>>> velocityPairs;
       velocityPairs.reserve(maximalNumberOfRevolutions * 4 + 2);
-      std::cout << "post decl" << std::endl;
+      //std::cout << "post decl" << std::endl;
       double lowerBound = -4.0 * arma::datum::pi;
       double upperBound = 4.0 * std::pow(arma::datum::pi, 2.0);
 
       // For zero revolutions
-      std::cout << "0" << std::endl;
+      //std::cout << "0" << std::endl;
       double brentShortWaySolution = mant::brent(timeOfFlightFunction, lowerBound, upperBound, 100, 1e-10);
-      std::cout << "pre push_back" << std::endl;
+      //std::cout << "pre push_back" << std::endl;
       //std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>> varr = calculateVelocityVectorsFunction();
       //std::cout << "varr type: " << typeid(varr).name() << std::endl;
       velocityPairs.push_back(calculateVelocityVectorsFunction());
-      std::cout << "post push_back" << std::endl;
+      //std::cout << "post push_back" << std::endl;
       t_m = -t_m;
-      std::cout << "1" << std::endl;
+      //std::cout << "1" << std::endl;
       double brentLongWaySolution = mant::brent(timeOfFlightFunction, lowerBound, upperBound, 100, 1e-10);
       velocityPairs.push_back(calculateVelocityVectorsFunction());
       t_m = -t_m;
 
       mant::OptimisationProblem timeOfFlightMinimumProblem(1);
       timeOfFlightMinimumProblem.setObjectiveFunction([&timeOfFlightFunction](const arma::Col<double>& parameter) {
-        std::cout << "in setObjectiveFunction" << std::endl;
+        //std::cout << "in setObjectiveFunction" << std::endl;
         return timeOfFlightFunction(parameter(0));
       });
 
@@ -132,15 +132,15 @@ namespace mant {
       for (numberOfRevolutions = 1; numberOfRevolutions <= maximalNumberOfRevolutions; numberOfRevolutions++) {
         lowerBound = 4.0 * std::pow((numberOfRevolutions)*arma::datum::pi, 2.0);
         upperBound = 4.0 * std::pow((numberOfRevolutions + 1) * arma::datum::pi, 2.0);
-        std::cout << "(lower, upper) = (" << lowerBound << ", " << upperBound << ")" << std::endl;
+        //std::cout << "(lower, upper) = (" << lowerBound << ", " << upperBound << ")" << std::endl;
         timeOfFlightMinimumProblem.setLowerBounds({lowerBound});
-        std::cout << "between bounds" << std::endl;
+        //std::cout << "between bounds" << std::endl;
         timeOfFlightMinimumProblem.setUpperBounds({upperBound});
-        std::cout << "post bounds" << std::endl;
+        //std::cout << "post bounds" << std::endl;
         timeOfFlightMinimumAlgorithm.optimise(timeOfFlightMinimumProblem, {(upperBound - lowerBound) / 2.0});
-        std::cout << "after optimise" << std::endl;
+        //std::cout << "after optimise" << std::endl;
         arma::Col<double> timeOfFlightMinimum = timeOfFlightMinimumAlgorithm.getBestParameter();
-        std::cout << "2 - " << numberOfRevolutions << std::endl;
+        //std::cout << "2 - " << numberOfRevolutions << std::endl;
         double brentShortWaySolutionLeft = mant::brent(timeOfFlightFunction, lowerBound, timeOfFlightMinimum(0), 100, 1e-10);
 
         if (std::isnan(brentShortWaySolutionLeft)) {
@@ -148,14 +148,14 @@ namespace mant {
         }
 
         std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>> brentShortWaySolutionLeftVelocities = calculateVelocityVectorsFunction();
-        std::cout << "3 - " << numberOfRevolutions << std::endl;
+        //std::cout << "3 - " << numberOfRevolutions << std::endl;
         double brentShortWaySolutionRight = mant::brent(timeOfFlightFunction, timeOfFlightMinimum(0), upperBound, 100, 1e-10);
         std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>> brentShortWaySolutionRightVelocities = calculateVelocityVectorsFunction();
         t_m = -t_m;
 
         timeOfFlightMinimumAlgorithm.optimise(timeOfFlightMinimumProblem, {(upperBound - lowerBound) / 2.0});
         timeOfFlightMinimum = timeOfFlightMinimumAlgorithm.getBestParameter();
-        std::cout << "4 - " << numberOfRevolutions << std::endl;
+        //std::cout << "4 - " << numberOfRevolutions << std::endl;
         double brentLongWaySolutionLeft = mant::brent(timeOfFlightFunction, lowerBound, timeOfFlightMinimum(0), 100, 1e-10);
 
         if (std::isnan(brentLongWaySolutionLeft)) {
@@ -163,7 +163,7 @@ namespace mant {
         }
 
         std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>> brentLongWaySolutionLeftVelocities = calculateVelocityVectorsFunction();
-        std::cout << "5 - " << numberOfRevolutions << std::endl;
+        //std::cout << "5 - " << numberOfRevolutions << std::endl;
         double brentLongWaySolutionRight = mant::brent(timeOfFlightFunction, timeOfFlightMinimum(0), upperBound, 100, 1e-10);
         std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>> brentLongWaySolutionRightVelocities = calculateVelocityVectorsFunction();
 
