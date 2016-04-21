@@ -45,25 +45,27 @@ namespace mant {
 
       double deltaVelocities = 0;
 
-      std::vector<std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>>> lambertVelocities = lambert(orbitBodyPositionsAndVelocities.at(0).first, orbitBodyPositionsAndVelocities.at(1).first, parameter(1));
+      std::vector<std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>>> lambertVelocities = lambert(orbitBodyPositionsAndVelocities.at(0).first, orbitBodyPositionsAndVelocities.at(1).first, parameter(1) * 86400.0);
 
       std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>> bestVelocities;
       double currentDV = std::numeric_limits<double>::max();
 
       for (auto pair : lambertVelocities) {
-        if (currentDV > arma::norm(pair.first - pair.second)) {
+        if (currentDV > arma::norm(pair.first) - arma::norm(pair.second)) {
           bestVelocities = pair;
         }
       }
-      // Launcher Constraint TODO
-      deltaVelocities += arma::norm(bestVelocities.first - bestVelocities.second) - rocketDVlaunch_;
-
+      // Launcher Constraint
+      if(arma::norm(bestVelocities.first - orbitBodyPositionsAndVelocities.at(0).first) > rocketDVlaunch_){
+        deltaVelocities += arma::norm(bestVelocities.first) - arma::norm(bestVelocities.second) - rocketDVlaunch_;
+      }
+      
       std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>> pastBestVelocities;
 
       for (int i = 2; i < parameter.n_elem; i++) {
         pastBestVelocities = bestVelocities;
 
-        lambertVelocities = lambert(orbitBodyPositionsAndVelocities.at(i - 1).first, orbitBodyPositionsAndVelocities.at(i).first, parameter(i));
+        lambertVelocities = lambert(orbitBodyPositionsAndVelocities.at(i - 1).first, orbitBodyPositionsAndVelocities.at(i).first, parameter(i) * 86400.0);
 
         currentDV = std::numeric_limits<double>::max();
 
@@ -78,7 +80,7 @@ namespace mant {
         std::pair<double, double> dvAndRp = gravityAssist(pastBestVelocities.second, bestVelocities.first);
         deltaVelocities += dvAndRp.first;
         
-        printf("Vin, Vout, DV, rp - %f, %f, %f, %f\n", arma::norm(pastBestVelocities.second / 1000.0), arma::norm(bestVelocities.first / 1000.0), dvAndRp.first, dvAndRp.second);
+        printf("Vin, Vout, DV, rp - %f, %f, %f, %f\n", arma::norm(pastBestVelocities.second), arma::norm(bestVelocities.first), dvAndRp.first, dvAndRp.second);
 
         /* ????????
         	for (i_count = 0; i_count < 3; i_count++)
@@ -101,8 +103,8 @@ namespace mant {
         DVtot += (DV[0] - rocketDVlaunch_);
       }
       */
-      std::cout << "stuff: " << rocketSpecificImpulse_ * 0.00980665 << " " << -deltaVelocities / (rocketSpecificImpulse_ * 0.00980665) << " " << std::exp(-deltaVelocities / (rocketSpecificImpulse_ * 0.00980665)) << std::endl;
-      double finalMass = rocketMass_ * std::exp((-deltaVelocities * 1000.0) / (rocketSpecificImpulse_ * 0.00980665));
+      std::cout << "stuff: " << rocketSpecificImpulse_ * 9.80665 << " " << -deltaVelocities / (rocketSpecificImpulse_ * 9.80665) << " " << std::exp(-deltaVelocities / (rocketSpecificImpulse_ * 9.80665)) << std::endl;
+      double finalMass = rocketMass_ * std::exp(-deltaVelocities / (rocketSpecificImpulse_ * 9.80665));
       //std::cout << "finalMass: " << finalMass << std::endl;
       arma::Col<double>::fixed<3> relativeVelocityToLastTarget = orbitBodyPositionsAndVelocities.back().second - bestVelocities.second;
       //std::cout << "relativeVelocityToLastTarget: " << relativeVelocityToLastTarget << std::endl;
