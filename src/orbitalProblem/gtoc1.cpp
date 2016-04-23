@@ -25,7 +25,7 @@ namespace mant {
 
       std::vector<std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>>> orbitBodyPositionsAndVelocities;
 
-      for (int i = 0; i < parameter.n_elem; i++) {
+      for (arma::uword i = 0; i < parameter.n_elem; i++) {
         totalTimePassed += parameter(i);
         orbitBodyPositionsAndVelocities.push_back(orbitOnPosition(totalTimePassed, orbitalTargetSequence_.at(i)));
       }
@@ -47,16 +47,21 @@ namespace mant {
 
       std::vector<std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>>> lambertVelocities = lambert(orbitBodyPositionsAndVelocities.at(0).first, orbitBodyPositionsAndVelocities.at(1).first, parameter(1) * 86400.0);
       
-      std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>> bestVelocities;
-      double currentDV = std::numeric_limits<double>::max();
+      std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>> bestVelocities = lambertVelocities.at(0);
+      double currentDV = std::abs(arma::norm(bestVelocities.first) - arma::norm(bestVelocities.second));
+      
+      //std::cout << "\t" << currentDV << " - (" << bestVelocities.first(0) << ", " << bestVelocities.first(1) << ", " << bestVelocities.first(2) << ")" << std::endl;
+      std::cout << "\ttest " << std::abs(arma::norm(lambertVelocities.at(1).first) - arma::norm(lambertVelocities.at(1).second)) << " - (" << lambertVelocities.at(1).first(0) << ", " << lambertVelocities.at(1).first(1) << ", " << lambertVelocities.at(1).first(2) << ")" << std::endl;
 
-      for (auto pair : lambertVelocities) {
-        if (currentDV > arma::norm(pair.first) - arma::norm(pair.second)) {
-          bestVelocities = pair;
+      for (arma::uword iter = 1; iter < lambertVelocities.size(); iter++) {
+        if (currentDV > std::abs(arma::norm(lambertVelocities.at(iter).first) - arma::norm(lambertVelocities.at(iter).second))) {
+          currentDV = std::abs(arma::norm(lambertVelocities.at(iter).first) - arma::norm(lambertVelocities.at(iter).second));
+          bestVelocities = lambertVelocities.at(iter);
         }
+        //std::cout << "\t" << currentDV << " - (" << bestVelocities.first(0) << ", " << bestVelocities.first(1) << ", " << bestVelocities.first(2) << ")" << std::endl;
       }
       
-      std::cout << "lambert solution: (" << bestVelocities.first(0) << ", " << bestVelocities.first(1) << ", " << bestVelocities.first(2) << ") ~ " << "(" << bestVelocities.second(0) << ", " << bestVelocities.second(1) << ", " << bestVelocities.second(2) << ") " << std::endl; 
+      std::cout << "lambert solution1: (" << bestVelocities.first(0) << ", " << bestVelocities.first(1) << ", " << bestVelocities.first(2) << ") ~ " << "(" << bestVelocities.second(0) << ", " << bestVelocities.second(1) << ", " << bestVelocities.second(2) << ") " << std::endl; 
       
       // Launcher Constraint
       if(arma::norm(bestVelocities.first - orbitBodyPositionsAndVelocities.at(0).first) > rocketDVlaunch_){
@@ -65,20 +70,26 @@ namespace mant {
       
       std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>> pastBestVelocities;
 
-      for (int i = 2; i < parameter.n_elem; i++) {
+      for (arma::uword i = 2; i < parameter.n_elem; i++) {
         pastBestVelocities = bestVelocities;
 
         lambertVelocities = lambert(orbitBodyPositionsAndVelocities.at(i - 1).first, orbitBodyPositionsAndVelocities.at(i).first, parameter(i) * 86400.0);
 
-        currentDV = std::numeric_limits<double>::max();
-
-        for (auto pair : lambertVelocities) {
-          if (currentDV > arma::norm(pair.first) - arma::norm(pair.second)) {
-            bestVelocities = pair;
+        bestVelocities = lambertVelocities.at(0);
+        
+        currentDV = std::abs(arma::norm(bestVelocities.first) - arma::norm(bestVelocities.second));
+        
+        std::cout << "\t" << currentDV << " - (" << bestVelocities.first(0) << ", " << bestVelocities.first(1) << ", " << bestVelocities.first(2) << ")" << std::endl;
+        
+        for (arma::uword iter = 1; iter < lambertVelocities.size(); iter++) {
+          if (currentDV > std::abs(arma::norm(lambertVelocities.at(iter).first) - arma::norm(lambertVelocities.at(iter).second))) {
+            currentDV = std::abs(arma::norm(lambertVelocities.at(iter).first) - arma::norm(lambertVelocities.at(iter).second));
+            bestVelocities = lambertVelocities.at(iter);
           }
+          std::cout << "\t" << currentDV << " - (" << bestVelocities.first(0) << ", " << bestVelocities.first(1) << ", " << bestVelocities.first(2) << ")" << std::endl;
         }
         
-        std::cout << "lambert solution: (" << bestVelocities.first(0) << ", " << bestVelocities.first(1) << ", " << bestVelocities.first(2) << ") ~ " << "(" << bestVelocities.second(0) << ", " << bestVelocities.second(1) << ", " << bestVelocities.second(2) << ") " << std::endl; 
+        std::cout << "lambert solution" << i << ": (" << bestVelocities.first(0) << ", " << bestVelocities.first(1) << ", " << bestVelocities.first(2) << ") ~ " << "(" << bestVelocities.second(0) << ", " << bestVelocities.second(1) << ", " << bestVelocities.second(2) << ") " << std::endl; 
 
         //deltaVelocities += arma::norm(bestVelocities.first - bestVelocities.second);
 
