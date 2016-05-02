@@ -12,7 +12,7 @@ namespace mant {
       orbitalTargetSequence_ = orbitalTargetSequence;
     }
 
-    arma::Col<double> GTOC1::problemFunction(const arma::Col<double>& parameter) {
+    arma::Col<double> GTOC1::objectiveFunction(const arma::Col<double>& parameter) {
       double totalTimePassed = 0.0;
       
       std::cout << "t as input: ";
@@ -21,7 +21,7 @@ namespace mant {
       }
       std::cout << std::endl;
 
-      verify(parameter.n_elem == orbitalTargetSequence_.size(), "gtoc1.problemFunction: Number of parameter and sequence length must be equal.");
+      verify(parameter.n_elem == orbitalTargetSequence_.size(), "gtoc1.objectiveFunction: Number of parameter and sequence length must be equal.");
 
       std::vector<std::pair<arma::Col<double>::fixed<3>, arma::Col<double>::fixed<3>>> orbitBodyPositionsAndVelocities;
 
