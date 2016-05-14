@@ -1598,6 +1598,12 @@ SCENARIO("OptimisationAlgorithm.reset", "[OptimisationAlgorithm][OptimisationAlg
           return continuousRandomNumbers(numberOfDimensions_);
         },
         "My custom restarting function name");
+    optimisationAlgorithm.setCommunicationFunction(
+        [&optimisationAlgorithm](
+            const arma::uword numberOfDimensions_) {
+          return continuousRandomNumbers(numberOfDimensions_);
+        },
+        "My custom communication function name");
 
     const double acceptableObjectiveValue = continuousRandomNumber();
     optimisationAlgorithm.setAcceptableObjectiveValue(acceptableObjectiveValue);
@@ -1628,6 +1634,7 @@ SCENARIO("OptimisationAlgorithm.reset", "[OptimisationAlgorithm][OptimisationAlg
       CHECK(optimisationAlgorithm.getBoundariesHandlingFunctionName() == "My custom boundaries-handling function name");
       CHECK(optimisationAlgorithm.getIsStagnatingFunctionName() == "My custom is stagnating function name");
       CHECK(optimisationAlgorithm.getRestartingFunctionName() == "My custom restarting function name");
+      CHECK(optimisationAlgorithm.getCommunicationFunctionName() == "My custom communication function name");
       CHECK(optimisationAlgorithm.getAcceptableObjectiveValue() == Approx(acceptableObjectiveValue));
       CHECK(optimisationAlgorithm.getMaximalNumberOfIterations() == maximalNumberOfIterations);
       CHECK(optimisationAlgorithm.getMaximalDuration() == maximalDuration);
