@@ -790,6 +790,147 @@ SCENARIO("OptimisationAlgorithm.getRestartingFunctionName", "[OptimisationAlgori
   }
 }
 
+SCENARIO("OptimisationAlgorithm.setCommunicationFunction", "[OptimisationAlgorithm][OptimisationAlgorithm.setCommunicationFunction]") {
+  mant::OptimisationAlgorithm optimisationAlgorithm;
+  optimisationAlgorithm.setMaximalNumberOfIterations(100);
+  optimisationAlgorithm.setNextParametersFunction(
+      [&optimisationAlgorithm](
+          const arma::uword numberOfDimensions_,
+          const arma::Mat<double>& parameters_,
+          const arma::Row<double>& objectiveValues_,
+          const arma::Row<double>& differences_) {
+        return continuousRandomNumbers(numberOfDimensions_);
+      });
+
+  const arma::uword numberOfDimensions = SYNCHRONISED(discreteRandomNumber());
+  CAPTURE(numberOfDimensions);
+
+  mant::bbob::SphereFunction optimisationProblem(numberOfDimensions);
+
+  GIVEN("A communication function and its name") {
+    const std::string& communicationFunctionName = "My custom communication function name";
+    CAPTURE(communicationFunctionName);
+
+    WHEN("The communication function is callable") {
+      auto communicationFunction = [&optimisationAlgorithm](
+          const arma::uword numberOfDimensions_) {
+        return continuousRandomNumbers(numberOfDimensions_);
+      };
+
+      THEN("Throw no exception") {
+        CHECK_NOTHROW(optimisationAlgorithm.setCommunicationFunction(communicationFunction, communicationFunctionName));
+      }
+
+      THEN("Reset all counters (number of (distinct) evaluations), the recorded sampling, the best parameter and objective value as well as why it finished") {
+        const arma::uword numberOfParameters = discreteRandomNumber();
+        CAPTURE(numberOfParameters);
+
+        const arma::Mat<double>& initialParameters = continuousRandomNumbers(numberOfDimensions, numberOfParameters);
+        CAPTURE(initialParameters);
+
+        // Records and increments the counter
+        ::mant::isRecordingSampling = true;
+        optimisationAlgorithm.optimise(optimisationProblem, initialParameters);
+        ::mant::isRecordingSampling = false;
+
+        optimisationAlgorithm.setCommunicationFunction(communicationFunction, communicationFunctionName);
+
+        CHECK(optimisationAlgorithm.getNumberOfIterations() == 0);
+        CHECK(optimisationAlgorithm.getDuration() == std::chrono::microseconds(0));
+        CHECK(optimisationAlgorithm.getRecordedSampling().size() == 0);
+        CHECK(optimisationAlgorithm.getBestObjectiveValue() >= arma::datum::inf);
+        CHECK(optimisationAlgorithm.getBestParameter().is_empty());
+        CHECK(optimisationAlgorithm.isFinished() == false);
+        CHECK(optimisationAlgorithm.isTerminated() == false);
+      }
+    }
+
+    WHEN("The communication function is not callable") {
+      THEN("Throw a std::logic_error") {
+        CHECK_THROWS_AS(optimisationAlgorithm.setCommunicationFunction(nullptr, communicationFunctionName), std::logic_error);
+      }
+    }
+  }
+
+  GIVEN("A communication function") {
+    WHEN("The communication function is callable") {
+      auto communicationFunction = [&optimisationAlgorithm](
+          const arma::uword numberOfDimensions_) {
+        return continuousRandomNumbers(numberOfDimensions_);
+      };
+
+      THEN("Throw no exception") {
+        CHECK_NOTHROW(optimisationAlgorithm.setCommunicationFunction(communicationFunction));
+      }
+
+      THEN("Reset all counters (number of (distinct) evaluations), the recorded sampling, the best parameter and objective value as well as why it finished") {
+        const arma::uword numberOfParameters = discreteRandomNumber();
+        CAPTURE(numberOfParameters);
+
+        const arma::Mat<double>& initialParameters = continuousRandomNumbers(numberOfDimensions, numberOfParameters);
+        CAPTURE(initialParameters);
+
+        // Records and increments the counter
+        ::mant::isRecordingSampling = true;
+        optimisationAlgorithm.optimise(optimisationProblem, initialParameters);
+        ::mant::isRecordingSampling = false;
+
+        optimisationAlgorithm.setCommunicationFunction(communicationFunction);
+
+        CHECK(optimisationAlgorithm.getNumberOfIterations() == 0);
+        CHECK(optimisationAlgorithm.getDuration() == std::chrono::microseconds(0));
+        CHECK(optimisationAlgorithm.getRecordedSampling().size() == 0);
+        CHECK(optimisationAlgorithm.getBestObjectiveValue() >= arma::datum::inf);
+        CHECK(optimisationAlgorithm.getBestParameter().is_empty());
+        CHECK(optimisationAlgorithm.isFinished() == false);
+        CHECK(optimisationAlgorithm.isTerminated() == false);
+      }
+    }
+
+    WHEN("The communication function is not callable") {
+      THEN("Throw a std::logic_error") {
+        CHECK_THROWS_AS(optimisationAlgorithm.setCommunicationFunction(nullptr), std::logic_error);
+      }
+    }
+  }
+}
+
+SCENARIO("OptimisationAlgorithm.getCommunicationFunctionName", "[OptimisationAlgorithm][OptimisationAlgorithm.getCommunicationFunctionName]") {
+  mant::OptimisationAlgorithm optimisationAlgorithm;
+//Problem : es wird keine Default communication function gesetzt, also wird der Folgende Test noch fehlschlagen
+  WHEN("The default communication function is unchanged") {
+    THEN("Return 'Do nothing'") {
+      CHECK(optimisationAlgorithm.getCommunicationFunctionName() == "Do nothing");
+    }
+  }
+*/
+  WHEN("The default communication function was changed") {
+    auto communicationFunction = [&optimisationAlgorithm](
+        const arma::uword numberOfDimensions_) {
+      return continuousRandomNumbers(numberOfDimensions_);
+    };
+
+    AND_WHEN("A new communication function name was set") {
+      const std::string& communicationFunctionName = "My custom communication function name";
+      CAPTURE(communicationFunctionName);
+
+      optimisationAlgorithm.setCommunicationFunction(communicationFunction, communicationFunctionName);
+
+      THEN("Return the communication function name") {
+        CHECK(optimisationAlgorithm.getCommunicationFunctionName() == communicationFunctionName);
+      }
+    }
+
+    AND_WHEN("No new communication function name was set") {
+      optimisationAlgorithm.setCommunicationFunction(communicationFunction);
+
+      THEN("Return the default, unnamed communication function name") {
+        CHECK(optimisationAlgorithm.getCommunicationFunctionName() == "Unnamed, custom communication function");
+      }
+    }
+  }
+}
+
 SCENARIO("OptimisationAlgorithm.setAcceptableObjectiveValue", "[OptimisationAlgorithm][OptimisationAlgorithm.setAcceptableObjectiveValue]") {
   mant::OptimisationAlgorithm optimisationAlgorithm;
   optimisationAlgorithm.setMaximalNumberOfIterations(100);
