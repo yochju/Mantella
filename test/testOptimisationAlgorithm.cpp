@@ -903,7 +903,7 @@ SCENARIO("OptimisationAlgorithm.getCommunicationFunctionName", "[OptimisationAlg
       CHECK(optimisationAlgorithm.getCommunicationFunctionName() == "Do nothing");
     }
   }
-*/
+
   WHEN("The default communication function was changed") {
     auto communicationFunction = [&optimisationAlgorithm](
         const arma::uword numberOfDimensions_) {
