@@ -1686,6 +1686,10 @@ SCENARIO("OptimisationAlgorithm.reset", "[OptimisationAlgorithm][OptimisationAlg
     const std::chrono::microseconds maximalDuration = std::chrono::milliseconds(discreteRandomNumber());
     optimisationAlgorithm.setMaximalDuration(maximalDuration);
     CAPTURE(maximalDuration.count());
+    
+    const arma::uword numberOfCommunicationStalls = discreteRandomNumber();
+    optimisationAlgorithm.setNumberOfCommunicationStalls(numberOfCommunicationStalls);
+    CAPTURE(numberOfCommunicationStalls);
 
     const arma::uword numberOfParameters = discreteRandomNumber();
     CAPTURE(numberOfParameters);
@@ -1708,6 +1712,7 @@ SCENARIO("OptimisationAlgorithm.reset", "[OptimisationAlgorithm][OptimisationAlg
       CHECK(optimisationAlgorithm.getAcceptableObjectiveValue() == Approx(acceptableObjectiveValue));
       CHECK(optimisationAlgorithm.getMaximalNumberOfIterations() == maximalNumberOfIterations);
       CHECK(optimisationAlgorithm.getMaximalDuration() == maximalDuration);
+      CHECK(optimisationAlgorithm.getNumberOfCommunicationStalls() == numberOfCommunicationStalls)
 
       CHECK(optimisationAlgorithm.getNumberOfIterations() == 0);
       CHECK(optimisationAlgorithm.getDuration() == std::chrono::microseconds(0));
