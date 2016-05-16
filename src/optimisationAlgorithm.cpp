@@ -67,6 +67,13 @@ namespace mant {
         "Random");
 
 #if defined(SUPPORT_MPI)
+    setCommunicationFunction(
+        [this](
+            const arma::uword numberOfDimensions_) {
+          
+        },
+        "Do nothing");
+        
     MPI_Comm_rank(MPI_COMM_WORLD, &nodeRank_);
     MPI_Comm_size(MPI_COMM_WORLD, &numberOfNodes_);
 #else
