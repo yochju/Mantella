@@ -1142,6 +1142,76 @@ SCENARIO("OptimisationAlgorithm.getMaximalDuration", "[OptimisationAlgorithm][Op
   }
 }
 
+SCENARIO("OptimisationAlgorithm.setNumberOfCommunicationStalls", "[OptimisationAlgorithm][OptimisationAlgorithm.setNumberOfCommunicationStalls]") {
+  mant::OptimisationAlgorithm optimisationAlgorithm;
+  optimisationAlgorithm.setMaximalNumberOfIterations(100);
+  optimisationAlgorithm.setNextParametersFunction(
+      [&optimisationAlgorithm](
+          const arma::uword numberOfDimensions_,
+          const arma::Mat<double>& parameters_,
+          const arma::Row<double>& objectiveValues_,
+          const arma::Row<double>& differences_) {
+        return continuousRandomNumbers(numberOfDimensions_);
+      });
+
+  const arma::uword numberOfDimensions = SYNCHRONISED(discreteRandomNumber());
+  CAPTURE(numberOfDimensions);
+
+  mant::bbob::SphereFunction optimisationProblem(numberOfDimensions);
+
+  GIVEN("A number of communication stalls") {
+    const arma::uword numberOfCommunicationStalls = discreteRandomNumber();
+    CAPTURE(numberOfCommunicationStalls);
+
+    THEN("Throw no exception") {
+      CHECK_NOTHROW(optimisationAlgorithm.setNumberOfCommunicationStalls(numberOfCommunicationStalls));
+    }
+
+    THEN("Do not reset the counters (number of (distinct) evaluations), the recorded sampling, the best parameter or objective value as well as why it finished") {
+      const arma::uword numberOfParameters = discreteRandomNumber();
+      CAPTURE(numberOfParameters);
+
+      const arma::Mat<double>& initialParameters = continuousRandomNumbers(numberOfDimensions, numberOfParameters);
+      CAPTURE(initialParameters);
+
+      // Records and increments the counter
+      ::mant::isRecordingSampling = true;
+      optimisationAlgorithm.optimise(optimisationProblem, initialParameters);
+      ::mant::isRecordingSampling = false;
+
+      optimisationAlgorithm.setNumberOfCommunicationStalls(numberOfCommunicationStalls);
+
+      CHECK(optimisationAlgorithm.getNumberOfIterations() > 0);
+      CHECK(optimisationAlgorithm.getDuration() > std::chrono::microseconds(0));
+      CHECK(optimisationAlgorithm.getRecordedSampling().size() > 0);
+      CHECK(optimisationAlgorithm.getBestObjectiveValue() < arma::datum::inf);
+      CHECK(!optimisationAlgorithm.getBestParameter().is_empty());
+      CHECK((optimisationAlgorithm.isFinished() || optimisationAlgorithm.isTerminated()));
+    }
+  }
+}
+
+SCENARIO("OptimisationAlgorithm.getNumberOfCommunicationStalls", "[OptimisationAlgorithm][OptimisationAlgorithm.getNumberOfCommunicationStalls]") {
+  mant::OptimisationAlgorithm optimisationAlgorithm;
+
+  WHEN("The default number of communication stalls is unchanged") {
+    THEN("Return 1") {
+      CHECK(optimisationAlgorithm.getNumberOfCommunicationStalls() == 1);
+    }
+  }
+
+  WHEN("The default number of communication stalls") {
+    const arma::uword numberOfCommunicationStalls = discreteRandomNumber();
+    CAPTURE(numberOfCommunicationStalls);
+
+    optimisationAlgorithm.setNumberOfCommunicationStalls(numberOfCommunicationStalls);
+
+    THEN("Return the updated number of communication stalls") {
+      CHECK(optimisationAlgorithm.getNumberOfCommunicationStalls() == numberOfCommunicationStalls);
+    }
+  }
+}
+
 SCENARIO("OptimisationAlgorithm.isFinished", "[OptimisationAlgorithm][OptimisationAlgorithm.isFinished]") {
   mant::OptimisationAlgorithm optimisationAlgorithm;
 
