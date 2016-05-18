@@ -897,7 +897,7 @@ SCENARIO("OptimisationAlgorithm.setCommunicationFunction", "[OptimisationAlgorit
 
 SCENARIO("OptimisationAlgorithm.getCommunicationFunctionName", "[OptimisationAlgorithm][OptimisationAlgorithm.getCommunicationFunctionName]") {
   mant::OptimisationAlgorithm optimisationAlgorithm;
-//Problem : es wird keine Default communication function gesetzt, also wird der Folgende Test noch fehlschlagen
+  //Problem : es wird keine Default communication function gesetzt, also wird der Folgende Test noch fehlschlagen
   WHEN("The default communication function is unchanged") {
     THEN("Return 'Do nothing'") {
       CHECK(optimisationAlgorithm.getCommunicationFunctionName() == "Do nothing");
@@ -1686,7 +1686,7 @@ SCENARIO("OptimisationAlgorithm.reset", "[OptimisationAlgorithm][OptimisationAlg
     const std::chrono::microseconds maximalDuration = std::chrono::milliseconds(discreteRandomNumber());
     optimisationAlgorithm.setMaximalDuration(maximalDuration);
     CAPTURE(maximalDuration.count());
-    
+
     const arma::uword numberOfCommunicationStalls = discreteRandomNumber();
     optimisationAlgorithm.setNumberOfCommunicationStalls(numberOfCommunicationStalls);
     CAPTURE(numberOfCommunicationStalls);
