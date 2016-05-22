@@ -4,6 +4,11 @@
 // C++ standard library
 #include <cmath>
 
+//OpenMP
+#if defined(SUPPORT_OMP)
+#include <omp.h>
+#endif
+
 // Mantella
 #include "mantella_bits/assert.hpp"
 #include "mantella_bits/optimisationProblem.hpp"
@@ -33,6 +38,9 @@ namespace mant {
             randomiseTopology_ = false;
           }
 
+          #pragma omp parallel
+          {
+          #pragma omp for
           for (arma::uword n = 0; n < particles_.n_cols; ++n) {
             if (objectiveValues_(n) < localBestObjectiveValues_(n)) {
               localBestObjectiveValues_(n) = objectiveValues_(n);
@@ -44,21 +52,26 @@ namespace mant {
             const arma::Col<double>& particle = particles_.col(n);
 
             arma::uword neighbourhoodBestParticleIndex;
-            arma::Col<arma::uword> neighbourhoodParticlesIndecies = arma::find(neighbourhoodTopology_.col(n));
-            static_cast<arma::Col<double>>(localBestObjectiveValues_.elem(neighbourhoodParticlesIndecies)).min(neighbourhoodBestParticleIndex);
+            arma::Col<arma::uword> neighbourhoodParticlesIndices = arma::find(neighbourhoodTopology_.col(n));
+            //writes the index of the best particle in the neighbourhood to neighbourhoodBestParticleIndex
+            static_cast<arma::Col<double>>(localBestObjectiveValues_.elem(neighbourhoodParticlesIndices)).min(neighbourhoodBestParticleIndex);
 
             arma::Col<double> attractionCenter;
-            if (neighbourhoodParticlesIndecies(neighbourhoodBestParticleIndex) == n) {
+            //if the current particle is actually the best one
+            if (neighbourhoodParticlesIndices(neighbourhoodBestParticleIndex) == n) {
               attractionCenter = (maximalLocalAttraction_ * (localBestSolutions_.col(n) - particle)) / 2.0;
-            } else {
-              attractionCenter = (maximalLocalAttraction_ * (localBestSolutions_.col(n) - particle) + maximalGlobalAttraction_ * (localBestSolutions_.col(neighbourhoodBestParticleIndex) - particle)) / 3.0;
+            } else {//if the current particle is not the best one
+              attractionCenter = (maximalLocalAttraction_ * (localBestSolutions_.col(n) - particle) 
+                      + maximalGlobalAttraction_ * (localBestSolutions_.col(neighbourhoodBestParticleIndex) - particle)) / 3.0;
             }
 
-            const arma::Col<double>& velocity = maximalAcceleration_ * arma::randu<arma::Col<double>>(numberOfDimensions_) % velocities_.col(n) + randomNeighbour(attractionCenter, 0, arma::norm(attractionCenter));
+            const arma::Col<double>& velocity = maximalAcceleration_ * arma::randu<arma::Col<double>>(numberOfDimensions_) % velocities_.col(n)
+                                                + randomNeighbour(attractionCenter, 0, arma::norm(attractionCenter));
 
             particles_.col(n) += velocity;
             velocities_.col(n) = velocity;
           }
+          }//end omp parallel
 
           return particles_;
         },
