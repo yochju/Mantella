@@ -38,16 +38,19 @@ namespace mant {
             randomiseTopology_ = false;
           }
 
-          #pragma omp parallel
+          #pragma omp parallel 
           {
+            //TODO: might be sensible to use if inside the pragma when it doesn't make sense to parallelize
           #pragma omp for
           for (arma::uword n = 0; n < particles_.n_cols; ++n) {
             if (objectiveValues_(n) < localBestObjectiveValues_(n)) {
+              //TODO: these variables are pseudo-parallelized ("false sharing"), this is really bad performance if they are not in a shared cache
               localBestObjectiveValues_(n) = objectiveValues_(n);
               localBestSolutions_.col(n) = parameters_.col(n);
             }
           }
 
+          #pragma omp for
           for (arma::uword n = 0; n < particles_.n_cols; ++n) {
             const arma::Col<double>& particle = particles_.col(n);
 
