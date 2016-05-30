@@ -38,10 +38,8 @@ namespace mant {
             randomiseTopology_ = false;
           }
 
-          #pragma omp parallel 
-          {
-            //TODO: might be sensible to use if inside the pragma when it doesn't make sense to parallelize
-          #pragma omp for
+          //TODO: might be sensible to use if inside the pragma when it doesn't make sense to parallelize
+          //#pragma omp parallel for schedule(static, 8)
           for (arma::uword n = 0; n < particles_.n_cols; ++n) {
             if (objectiveValues_(n) < localBestObjectiveValues_(n)) {
               //TODO: these variables are pseudo-parallelized ("false sharing"), this is really bad performance if they are not in a shared cache
@@ -50,30 +48,43 @@ namespace mant {
             }
           }
 
-          #pragma omp for
-          for (arma::uword n = 0; n < particles_.n_cols; ++n) {
-            const arma::Col<double>& particle = particles_.col(n);
+          #pragma omp parallel
+          {
+            arma::Mat<double> velocity_private = arma::zeros(particles_.n_rows,particles_.n_cols);
+            #pragma omp for nowait
+            for (arma::uword n = 0; n < particles_.n_cols; ++n) {
+              const arma::Col<double>& particle = particles_.col(n);
 
-            arma::uword neighbourhoodBestParticleIndex;
-            arma::Col<arma::uword> neighbourhoodParticlesIndices = arma::find(neighbourhoodTopology_.col(n));
-            //writes the index of the best particle in the neighbourhood to neighbourhoodBestParticleIndex
-            static_cast<arma::Col<double>>(localBestObjectiveValues_.elem(neighbourhoodParticlesIndices)).min(neighbourhoodBestParticleIndex);
+              arma::uword neighbourhoodBestParticleIndex;
+              arma::Col<arma::uword> neighbourhoodParticlesIndices = arma::find(neighbourhoodTopology_.col(n));
+              //writes the index of the best particle in the neighbourhood to neighbourhoodBestParticleIndex
+              static_cast<arma::Col<double>>(localBestObjectiveValues_.elem(neighbourhoodParticlesIndices)).min(neighbourhoodBestParticleIndex);
 
-            arma::Col<double> attractionCenter;
-            //if the current particle is actually the best one
-            if (neighbourhoodParticlesIndices(neighbourhoodBestParticleIndex) == n) {
-              attractionCenter = (maximalLocalAttraction_ * (localBestSolutions_.col(n) - particle)) / 2.0;
-            } else {//if the current particle is not the best one
-              attractionCenter = (maximalLocalAttraction_ * (localBestSolutions_.col(n) - particle) 
-                      + maximalGlobalAttraction_ * (localBestSolutions_.col(neighbourhoodBestParticleIndex) - particle)) / 3.0;
+              arma::Col<double> attractionCenter;
+              //if the current particle is actually the best one
+              if (neighbourhoodParticlesIndices(neighbourhoodBestParticleIndex) == n) {
+                attractionCenter = (maximalLocalAttraction_ * (localBestSolutions_.col(n) - particle)) / 2.0;
+              } else {//if the current particle is not the best one
+                attractionCenter = (maximalLocalAttraction_ * (localBestSolutions_.col(n) - particle) 
+                        + maximalGlobalAttraction_ * (localBestSolutions_.col(neighbourhoodBestParticleIndex) - particle)) / 3.0;
+              }
+
+              const arma::Col<double>& velocity = maximalAcceleration_ * arma::randu<arma::Col<double>>(numberOfDimensions_) % velocities_.col(n)
+                                                  + randomNeighbour(attractionCenter, 0, arma::norm(attractionCenter));
+
+              velocity_private.col(n) = velocity;
             }
-
-            const arma::Col<double>& velocity = maximalAcceleration_ * arma::randu<arma::Col<double>>(numberOfDimensions_) % velocities_.col(n)
-                                                + randomNeighbour(attractionCenter, 0, arma::norm(attractionCenter));
-
-            particles_.col(n) += velocity;
-            velocities_.col(n) = velocity;
-          }
+            #pragma omp single
+            {
+              velocities_ = arma::zeros(particles_.n_rows,particles_.n_cols);
+            }
+            #pragma omp critical
+            {
+              for(arma::uword n = 0; n < particles_.n_cols; n++) {
+                particles_.col(n) += velocity_private.col(n);
+                velocities_.col(n) += velocity_private.col(n);
+              }
+            }
           }//end omp parallel
 
           return particles_;
