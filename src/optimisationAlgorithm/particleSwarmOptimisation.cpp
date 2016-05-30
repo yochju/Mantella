@@ -50,8 +50,7 @@ namespace mant {
 
           #pragma omp parallel
           {
-            arma::Mat<double> velocity_private = arma::zeros(particles_.n_rows,particles_.n_cols);
-            #pragma omp for nowait
+            #pragma omp for
             for (arma::uword n = 0; n < particles_.n_cols; ++n) {
               const arma::Col<double>& particle = particles_.col(n);
 
@@ -72,18 +71,8 @@ namespace mant {
               const arma::Col<double>& velocity = maximalAcceleration_ * arma::randu<arma::Col<double>>(numberOfDimensions_) % velocities_.col(n)
                                                   + randomNeighbour(attractionCenter, 0, arma::norm(attractionCenter));
 
-              velocity_private.col(n) = velocity;
-            }
-            #pragma omp single
-            {
-              velocities_ = arma::zeros(particles_.n_rows,particles_.n_cols);
-            }
-            #pragma omp critical
-            {
-              for(arma::uword n = 0; n < particles_.n_cols; n++) {
-                particles_.col(n) += velocity_private.col(n);
-                velocities_.col(n) += velocity_private.col(n);
-              }
+              particles_.col(n) += velocity;
+              velocities_.col(n) = velocity;
             }
           }//end omp parallel
 
