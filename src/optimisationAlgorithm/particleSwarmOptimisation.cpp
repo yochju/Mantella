@@ -50,7 +50,7 @@ namespace mant {
 
           #pragma omp parallel
           {
-            #pragma omp for
+            #pragma omp for schedule(static)
             for (arma::uword n = 0; n < particles_.n_cols; ++n) {
               const arma::Col<double>& particle = particles_.col(n);
 
