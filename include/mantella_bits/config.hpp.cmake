@@ -13,3 +13,9 @@ namespace mant {
 #if defined(SUPPORT_MPI)
 #include <mpi.h>
 #endif
+
+// OpenMP support decided via CMake
+#cmakedefine SUPPORT_OMP
+#if defined(SUPPORT_OMP)
+#include <omp.h>
+#endif

@@ -4,11 +4,6 @@
 // C++ standard library
 #include <cmath>
 
-//OpenMP
-#if defined(SUPPORT_OMP)
-#include <omp.h>
-#endif
-
 // Mantella
 #include "mantella_bits/assert.hpp"
 #include "mantella_bits/optimisationProblem.hpp"
