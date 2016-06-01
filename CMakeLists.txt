@@ -22,11 +22,13 @@ option(SUPPORT_OMP "Add OpenMP support" ON)
 option(SUPPORT_MPI "Add MPI support" OFF)
 # Development build options
 option(USE_CCACHE "Use ccache" OFF)
+option(PROFILING "Profiling" OFF)
 option(BUILD_TESTS "Build tests" OFF)
 option(MEASURE_CODE_COVERAGE "Measure code coverage" OFF)
 
 mark_as_advanced(
   USE_CCACHE
+  PROFILING
   BUILD_TESTS
   MEASURE_CODE_COVERAGE
 )
@@ -103,12 +105,27 @@ if(USE_CCACHE)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
   else()
-    message(STATUS "  - ccache was no found on your system.")
+    message(STATUS "  - ccache was not found on your system.")
   endif()
 else()
   message(STATUS "- Excluding ccache usage.")
   message(STATUS "  - Use 'cmake ... -DUSE_CCACHE=ON' to add this.")
 endif()
+
+if(PROFILING)
+  find_program(SCOREP_FOUND scorep)
+  if(SCOREP_FOUND)
+    message(STATUS "  - Using Score-P to profile.")
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE scorep)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK scorep)
+  else()
+    message(STATUS "  - scorep was not found on your system.")
+  endif()
+else()
+  message(STATUS "- Excluding Score-P profiling.")
+  message(STATUS "  - Use 'cmake ... -DPROFILING=ON' to add this.")
+endif()
+
 
 # ----------------------
 # SETTING COMPILER FLAGS
