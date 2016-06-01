@@ -98,7 +98,7 @@ namespace mant {
 
     setNeighbourhoodTopologyFunction(
         [this]() {
-          arma::Mat<arma::uword> neighbourhoodTopology = (arma::randu<arma::Mat<double>>(numberOfParticles_, numberOfParticles_) <= std::pow(1.0 - 1.0 / static_cast<double>(numberOfParticles_), 3.0));
+          arma::Mat<arma::uword> neighbourhoodTopology = (arma::randu<arma::Mat<double>>(numberOfParticles_, numberOfParticles_) <= (1- std::pow(1.0 - 1.0 / static_cast<double>(numberOfParticles_), 3.0)));
           neighbourhoodTopology.diag().ones();
 
           return neighbourhoodTopology;
