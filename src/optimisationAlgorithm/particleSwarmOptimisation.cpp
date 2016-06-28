@@ -47,7 +47,6 @@ namespace mant {
           {
             #pragma omp for schedule(static)
             for (arma::uword n = 0; n < particles_.n_cols; ++n) {
-              std::cout << "thread " << omp_get_thread_num() << " working on particle " << n << std::endl;
               const arma::Col<double>& particle = particles_.col(n);
 
               arma::uword neighbourhoodBestParticleIndex;
