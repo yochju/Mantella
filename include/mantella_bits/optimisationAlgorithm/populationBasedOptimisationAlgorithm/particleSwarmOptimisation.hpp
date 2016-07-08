@@ -7,7 +7,7 @@
 #include "mantella_bits/optimisationAlgorithm/populationBasedOptimisationAlgorithm.hpp"
 
 //OpenMP
-#if defined(SUPPORT_OMP)
+#if defined(_OPENMP)
 #include <omp.h>
 #endif
 

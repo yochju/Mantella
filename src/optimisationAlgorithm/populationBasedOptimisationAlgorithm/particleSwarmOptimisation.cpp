@@ -55,15 +55,19 @@ namespace mant {
                                      }
                                    }
 
-                                   arma::mat particles(arma::size(parameters_));
-                                   for (arma::uword n = 0; n < populationSize_; ++n) {
-                                     const arma::vec& particle = parameters_.col(n);
+                                   #pragma omp parallel
+                                   {
+                                    arma::mat particles(arma::size(parameters_));
+                                    #pragma omp for schedule(static)
+                                    for (arma::uword n = 0; n < populationSize_; ++n) {
+                                      const arma::vec& particle = parameters_.col(n);
 
-                                     arma::vec attractionCenter = (getMaximalLocalAttraction() * (localBestSolutions_.col(n) - particle) + getMaximalGlobalAttraction() * (getBestFoundParameter() - particle)) / 3.0;
-                                     const arma::vec& velocity = randomNeighbour(getMaximalAcceleration() * arma::randu<arma::vec>(numberOfDimensions_) % velocities_.col(n), 0, arma::norm(attractionCenter));
+                                      arma::vec attractionCenter = (getMaximalLocalAttraction() * (localBestSolutions_.col(n) - particle) + getMaximalGlobalAttraction() * (getBestFoundParameter() - particle)) / 3.0;
+                                      const arma::vec& velocity = randomNeighbour(getMaximalAcceleration() * arma::randu<arma::vec>(numberOfDimensions_) % velocities_.col(n), 0, arma::norm(attractionCenter));
 
-                                     particles.col(n) = particle + velocity;
-                                     velocities_.col(n) = velocity;
+                                      particles.col(n) = particle + velocity;
+                                      velocities_.col(n) = velocity;
+                                    }
                                    }
 
                                    return particles;
