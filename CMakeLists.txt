@@ -240,7 +240,7 @@ if (BUILD_TESTS)
     test/testConfig.cpp
     
     # Assertions
-    #test/testAssert.cpp
+    test/testAssert.cpp
 
     # Random number generator
     test/testRandomNumberGenerator.cpp
