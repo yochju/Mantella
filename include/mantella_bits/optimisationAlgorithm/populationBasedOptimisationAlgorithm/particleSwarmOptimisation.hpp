@@ -5,6 +5,12 @@
 
 // Mantella
 #include "mantella_bits/optimisationAlgorithm/populationBasedOptimisationAlgorithm.hpp"
+
+//OpenMP
+#if defined(SUPPORT_OMP)
+#include <omp.h>
+#endif
+
 namespace mant {
   class OptimisationProblem;
 }

@@ -69,9 +69,6 @@ namespace mant {
     void setMaximalDuration(
         const std::chrono::microseconds maximalDuration);
     std::chrono::microseconds getMaximalDuration() const;
-    void setNumberOfCommunicationStalls(
-        const arma::uword numberOfCommunicationStalls);
-    arma::uword getNumberOfCommunicationStalls() const;
 
     arma::uword getUsedNumberOfIterations() const;
     std::chrono::microseconds getUsedDuration() const;
@@ -142,7 +139,6 @@ namespace mant {
 
     int nodeRank_;
     int numberOfNodes_;
-    arma::uword numberOfCommunicationStalls_;
 
     arma::uword numberOfCommunicationStalls_;
 

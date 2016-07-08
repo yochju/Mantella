@@ -30,7 +30,6 @@ namespace mant {
     setAcceptableObjectiveValue(-std::numeric_limits<double>::infinity());
     setMaximalNumberOfIterations(std::numeric_limits<arma::uword>::max());
     setMaximalDuration(std::chrono::seconds(1));
-    setNumberOfCommunicationStalls(1);
 
     setBoundariesHandlingFunctions({{[this](
                                          const arma::mat& parameters_,
@@ -355,25 +354,6 @@ namespace mant {
 
   arma::uword OptimisationAlgorithm::getNumberOfCommunicationStalls() const {
     return numberOfCommunicationStalls_;
-  }
-
-  void OptimisationAlgorithm::setCommunicationFunction(
-      std::function<void(const arma::uword numberOfDimensions_)> communicationFunction, const std::string& communicationFunctionName) {
-    verify(static_cast<bool>(communicationFunction), "OptimisationAlgorithm.setCommunicationFunction: The communication function must be callable.");
-
-    communicationFunction_ = communicationFunction;
-    communicationFunctionName_ = communicationFunctionName;
-
-    reset();
-  }
-
-  void OptimisationAlgorithm::setCommunicationFunction(
-      std::function<void(arma::uword numberOfDimensions_)> communicationFunction) {
-    setCommunicationFunction(communicationFunction, "Unnamed, custom communication function");
-  }
-
-  std::string OptimisationAlgorithm::getCommunicationFunctionName() const {
-    return communicationFunctionName_;
   }
 
   void OptimisationAlgorithm::setAcceptableObjectiveValue(
