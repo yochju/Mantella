@@ -80,9 +80,14 @@ namespace mant {
 
   arma::vec randu(
       const arma::uword numberOfElements) {
+    std::mt19937_64& generator = Rng::getGenerator(omp_get_thread_num());
+    std::uniform_real_distribution<double> distribution;
     arma::vec randomVector(numberOfElements);
-    auto distribution = std::bind(std::uniform_real_distribution<double>(), Rng::getGenerator(getThreadNumber()));
-    std::generate(randomVector.begin(), randomVector.end(), distribution);
+    for(arma::uword i = 0; i < randomVector.n_elem; i++) {
+        randomVector(i) = distribution(generator);
+      }
+//    auto distribution = std::bind(std::uniform_real_distribution<double>(), Rng::getGenerator(getThreadNumber()));
+//    std::generate(randomVector.begin(), randomVector.end(), distribution);
     return randomVector;
   }
 
