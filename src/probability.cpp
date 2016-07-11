@@ -5,7 +5,9 @@
 #include <stdexcept>
 
 // Mantella
+#include "mantella_bits/armadillo.hpp"
 #include "mantella_bits/randomNumberGenerator.hpp"
+#include "mantella_bits/config.hpp"
 
 namespace mant {
   arma::mat randomRotationMatrix(
@@ -58,6 +60,6 @@ namespace mant {
     }
 
     // @see J. S. Hicks and R. F. Wheeling (1959). An efficient method for generating uniformly distributed points on the surface of an n-dimensional sphere. Communications of the ACM, 2(4), pp. 17-19.
-    return parameter + arma::normalise(arma::randn<arma::vec>(arma::size(parameter))) * (minimalDistance + std::uniform_real_distribution<double>(0, 1)(Rng::generator_) * (maximalDistance - minimalDistance));
+    return parameter + arma::normalise(mant::randn(parameter.n_elem)) * (minimalDistance + std::uniform_real_distribution<double>(0, 1)(Rng::getGenerator(getThreadNumber())) * (maximalDistance - minimalDistance));
   }
 }
