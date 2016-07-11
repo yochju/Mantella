@@ -63,7 +63,7 @@ namespace mant {
                                       const arma::vec& particle = parameters_.col(n);
 
                                       arma::vec attractionCenter = (getMaximalLocalAttraction() * (localBestSolutions_.col(n) - particle) + getMaximalGlobalAttraction() * (getBestFoundParameter() - particle)) / 3.0;
-                                      const arma::vec& velocity = randomNeighbour(getMaximalAcceleration() * mant::randu(numberOfDimensions_) % velocities_.col(n), 0, arma::norm(attractionCenter));
+                                      const arma::vec& velocity = getMaximalAcceleration() * mant::randu(numberOfDimensions_) % velocities_.col(n) + randomNeighbour(attractionCenter, 0, arma::norm(attractionCenter));
 
                                       particles.col(n) = particle + velocity;
                                       velocities_.col(n) = velocity;
