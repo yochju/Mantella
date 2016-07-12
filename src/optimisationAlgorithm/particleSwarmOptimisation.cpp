@@ -82,12 +82,10 @@ namespace mant {
 
     setNeighbourhoodTopologyFunction(
         [this]() {
-          arma::Mat<arma::uword> neighbourhoodTopology = (arma::randu<arma::Mat<double>>(numberOfParticles_, numberOfParticles_) <= std::pow(1.0 - 1.0 / static_cast<double>(numberOfParticles_), 3.0));
-          neighbourhoodTopology.diag().ones();
-
+          arma::Mat<arma::uword> neighbourhoodTopology(numberOfParticles_, numberOfParticles_, arma::fill::ones);  
           return neighbourhoodTopology;
         },
-        "Random");
+        "Global");
 
     setMaximalAcceleration(1.0 / (2.0 * std::log(2.0)));
     setMaximalLocalAttraction(0.5 + std::log(2.0));
